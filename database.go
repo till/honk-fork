@@ -846,6 +846,7 @@ func savehonk(h *Honk) error {
 	}
 	if err == nil {
 		if h.Whofore == 1 {
+			dlog.Printf("another one for me: %s", h.XID)
 			meplusone(tx, h.UserID)
 		}
 		err = tx.Commit()
