@@ -135,8 +135,6 @@ func shrinkit(data []byte) (*image.Image, error) {
 	return res.Image, nil
 }
 
-var backendhooks []func()
-
 func orphancheck() {
 	var b [1]byte
 	os.Stdin.Read(b[:])
@@ -169,9 +167,7 @@ func backendServer() {
 	if err != nil {
 		elog.Printf("error setting backend limits: %s", err)
 	}
-	for _, h := range backendhooks {
-		h()
-	}
+	securitizebackend()
 	srv.Accept(lis)
 }
 

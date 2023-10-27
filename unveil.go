@@ -19,35 +19,34 @@ import (
 	"humungus.tedunangst.com/r/pledge"
 )
 
-func init() {
-	preservehooks = append(preservehooks, func() {
-		err := pledge.Unveil("/etc/ssl", "r")
+func securitizeweb() {
+	err := pledge.Unveil("/etc/ssl", "r")
+	if err != nil {
+		elog.Fatalf("unveil(%s, %s) failure (%d)", "/etc/ssl", "r", err)
+	}
+	if viewDir != dataDir {
+		err = pledge.Unveil(viewDir, "r")
 		if err != nil {
-			elog.Fatalf("unveil(%s, %s) failure (%d)", "/etc/ssl", "r", err)
+			elog.Fatalf("unveil(%s, %s) failure (%d)", viewDir, "r", err)
 		}
-		if viewDir != dataDir {
-			err = pledge.Unveil(viewDir, "r")
-			if err != nil {
-				elog.Fatalf("unveil(%s, %s) failure (%d)", viewDir, "r", err)
-			}
-		}
-		err = pledge.Unveil(dataDir, "rwc")
-		if err != nil {
-			elog.Fatalf("unveil(%s, %s) failure (%d)", dataDir, "rwc", err)
-		}
-		pledge.UnveilEnd()
-		promises := "stdio rpath wpath cpath flock dns inet unix"
-		err = pledge.Pledge(promises)
-		if err != nil {
-			elog.Fatalf("pledge(%s) failure (%d)", promises, err)
-		}
-	})
-	backendhooks = append(backendhooks, func() {
-		pledge.UnveilEnd()
-		promises := "stdio unix"
-		err := pledge.Pledge(promises)
-		if err != nil {
-			elog.Fatalf("pledge(%s) failure (%d)", promises, err)
-		}
-	})
+	}
+	err = pledge.Unveil(dataDir, "rwc")
+	if err != nil {
+		elog.Fatalf("unveil(%s, %s) failure (%d)", dataDir, "rwc", err)
+	}
+	pledge.UnveilEnd()
+	promises := "stdio rpath wpath cpath flock dns inet unix"
+	err = pledge.Pledge(promises)
+	if err != nil {
+		elog.Fatalf("pledge(%s) failure (%d)", promises, err)
+	}
+}
+
+func securitizebackend() {
+	pledge.UnveilEnd()
+	promises := "stdio unix"
+	err := pledge.Pledge(promises)
+	if err != nil {
+		elog.Fatalf("pledge(%s) failure (%d)", promises, err)
+	}
 }

@@ -2696,8 +2696,6 @@ func enditall() {
 	os.Exit(0)
 }
 
-var preservehooks []func()
-
 func bgmonitor() {
 	for {
 		when := time.Now().Add(-3 * 24 * time.Hour).UTC().Format(dbtimeformat)
@@ -2814,9 +2812,7 @@ func serve() {
 		loadAvatarColors()
 	}
 
-	for _, h := range preservehooks {
-		h()
-	}
+	securitizeweb()
 
 	mux := mux.NewRouter()
 	mux.Use(addcspheaders)
