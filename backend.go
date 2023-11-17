@@ -90,32 +90,7 @@ func imageFromSVG(data []byte) (*image.Image, error) {
 	return svg, nil
 }
 
-func bigshrink(data []byte) (*image.Image, error) {
-	if isSVG(data) {
-		return imageFromSVG(data)
-	}
-	cl, err := rpc.Dial("unix", backendSockname())
-	if err != nil {
-		return nil, err
-	}
-	defer cl.Close()
-	var res ShrinkerResult
-	err = cl.Call("Shrinker.Shrink", &ShrinkerArgs{
-		Buf: data,
-		Params: image.Params{
-			LimitSize: 14200 * 4200,
-			MaxWidth:  2600,
-			MaxHeight: 2048,
-			MaxSize:   768 * 1024,
-		},
-	}, &res)
-	if err != nil {
-		return nil, err
-	}
-	return res.Image, nil
-}
-
-func shrinkit(data []byte) (*image.Image, error) {
+func callshrink(data []byte, params image.Params) (*image.Image, error) {
 	if isSVG(data) {
 		return imageFromSVG(data)
 	}
@@ -127,12 +102,31 @@ func shrinkit(data []byte) (*image.Image, error) {
 	var res ShrinkerResult
 	err = cl.Call("Shrinker.Shrink", &ShrinkerArgs{
 		Buf:    data,
-		Params: image.Params{LimitSize: 4200 * 4200, MaxWidth: 2048, MaxHeight: 2048},
+		Params: params,
 	}, &res)
 	if err != nil {
 		return nil, err
 	}
 	return res.Image, nil
+}
+
+func bigshrink(data []byte) (*image.Image, error) {
+	params := image.Params{
+		LimitSize: 14200 * 4200,
+		MaxWidth:  2600,
+		MaxHeight: 2048,
+		MaxSize:   768 * 1024,
+	}
+	return callshrink(data, params)
+}
+
+func shrinkit(data []byte) (*image.Image, error) {
+	params := image.Params{
+		LimitSize: 4200 * 4200,
+		MaxWidth:  2048,
+		MaxHeight: 2048,
+	}
+	return callshrink(data, params)
 }
 
 func orphancheck() {
