@@ -189,7 +189,7 @@ func runBackendServer() {
 		readyalready <- true
 	}()
 	go func() {
-		proc.Wait()
+		err := proc.Wait()
 		mtx.Lock()
 		defer mtx.Unlock()
 		if w != nil {
