@@ -16,36 +16,36 @@
 package main
 
 import (
-	"humungus.tedunangst.com/r/pledge"
+	"humungus.tedunangst.com/r/gonix"
 )
 
 func securitizeweb() {
-	err := pledge.Unveil("/etc/ssl", "r")
+	err := gonix.Unveil("/etc/ssl", "r")
 	if err != nil {
 		elog.Fatalf("unveil(%s, %s) failure (%d)", "/etc/ssl", "r", err)
 	}
 	if viewDir != dataDir {
-		err = pledge.Unveil(viewDir, "r")
+		err = gonix.Unveil(viewDir, "r")
 		if err != nil {
 			elog.Fatalf("unveil(%s, %s) failure (%d)", viewDir, "r", err)
 		}
 	}
-	err = pledge.Unveil(dataDir, "rwc")
+	err = gonix.Unveil(dataDir, "rwc")
 	if err != nil {
 		elog.Fatalf("unveil(%s, %s) failure (%d)", dataDir, "rwc", err)
 	}
-	pledge.UnveilEnd()
+	gonix.UnveilEnd()
 	promises := "stdio rpath wpath cpath flock dns inet unix"
-	err = pledge.Pledge(promises)
+	err = gonix.Pledge(promises)
 	if err != nil {
 		elog.Fatalf("pledge(%s) failure (%d)", promises, err)
 	}
 }
 
 func securitizebackend() {
-	pledge.UnveilEnd()
+	gonix.UnveilEnd()
 	promises := "stdio unix"
-	err := pledge.Pledge(promises)
+	err := gonix.Pledge(promises)
 	if err != nil {
 		elog.Fatalf("pledge(%s) failure (%d)", promises, err)
 	}

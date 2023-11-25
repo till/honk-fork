@@ -38,6 +38,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/gorilla/mux"
+	"humungus.tedunangst.com/r/gonix"
 	"humungus.tedunangst.com/r/webs/cache"
 	"humungus.tedunangst.com/r/webs/gencache"
 	"humungus.tedunangst.com/r/webs/httpsig"
@@ -2759,6 +2760,32 @@ func getassetparam(file string) string {
 	return fmt.Sprintf("?v=%.8x", hasher.Sum(nil))
 }
 
+func startWatcher() {
+	watcher, err := gonix.NewWatcher()
+	if err != nil {
+		elog.Printf("can't watch: %s", err)
+		return
+	}
+	go func() {
+		s := dataDir + "/views/local.css"
+		for {
+			err := watcher.WatchFile(s)
+			if err != nil {
+				dlog.Printf("can't watch: %s", err)
+				break
+			}
+			err = watcher.WaitForChange()
+			if err != nil {
+				dlog.Printf("can't wait: %s", err)
+				break
+			}
+			dlog.Printf("local.css changed")
+			delete(savedassetparams, s)
+			savedassetparams[s] = getassetparam(s)
+		}
+	}()
+}
+
 var usefcgi bool
 
 func serve() {
@@ -2811,6 +2838,7 @@ func serve() {
 		}
 		loadAvatarColors()
 	}
+	startWatcher()
 
 	securitizeweb()
 
