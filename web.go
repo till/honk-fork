@@ -413,8 +413,17 @@ func inbox(w http.ResponseWriter, r *http.Request) {
 	}
 	what := firstofmany(j, "type")
 	obj, _ := j.GetString("object")
-	if what == "Like" || what == "Dislike" || (what == "EmojiReact" && originate(obj) != serverName) {
+	switch what {
+	case "Like":
 		return
+	case "Dislike":
+		return
+	case "Listen":
+		return
+	case "EmojiReact":
+		if originate(obj) != serverName {
+			return
+		}
 	}
 	who, _ := j.GetString("actor")
 	if rejectactor(user.ID, who) {
