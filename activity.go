@@ -495,7 +495,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 	goingup := 0
 	var xonkxonkfn func(junk.Junk, string, bool, string) *Honk
 
-	qutify := func(user *WhatAbout, content string) string {
+	qutify := func(user *WhatAbout, qurl, content string) string {
 		if depth >= maxdepth {
 			ilog.Printf("in too deep")
 			return content
@@ -504,6 +504,9 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		malcontent := strings.ReplaceAll(content, `</span><span class="ellipsis">`, "")
 		malcontent = strings.ReplaceAll(malcontent, `</span><span class="invisible">`, "")
 		mlinks := re_qtlinks.FindAllString(malcontent, -1)
+		if qurl != "" {
+			mlinks = append(mlinks, ">"+qurl+"<")
+		}
 		for _, m := range mlinks {
 			tryit := false
 			m = m[1 : len(m)-1]
@@ -516,12 +519,16 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				tryit = true
 			}
 			if tryit {
+				var prefix string
+				if m == qurl {
+					prefix += fmt.Sprintf("<p><a href=\"%s\">%s</a>", m, m)
+				}
 				if x := getxonk(user.ID, m); x != nil {
-					content = fmt.Sprintf("%s<blockquote>%s</blockquote>", content, x.Noise)
+					content = fmt.Sprintf("%s%s<blockquote>%s</blockquote>", content, prefix, x.Noise)
 				} else if j, err := GetJunk(user.ID, m); err == nil {
 					q, ok := j.GetString("content")
 					if ok {
-						content = fmt.Sprintf("%s<blockquote>%s</blockquote>", content, q)
+						content = fmt.Sprintf("%s%s<blockquote>%s</blockquote>", content, prefix, q)
 					}
 					prevdepth := depth
 					depth = maxdepth
@@ -798,7 +805,8 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				url = xid
 			}
 			if user.Options.InlineQuotes {
-				content = qutify(user, content)
+				qurl, _ := obj.GetString("quoteUrl")
+				content = qutify(user, qurl, content)
 			}
 			rid, ok = obj.GetString("inReplyTo")
 			if !ok {
