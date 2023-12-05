@@ -19,11 +19,13 @@ import (
 	"bytes"
 	"crypto/sha512"
 	"database/sql"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
 	notrand "math/rand"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/http/fcgi"
 	"net/url"
@@ -33,6 +35,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 	"unicode/utf8"
@@ -2689,19 +2692,28 @@ func fiveoh(w http.ResponseWriter, r *http.Request) {
 var endoftheworld = make(chan bool)
 var readyalready = make(chan bool)
 var workinprogress = 0
+var requestWG sync.WaitGroup
+var listenSocket net.Listener
 
 func enditall() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	<-sig
 	ilog.Printf("stopping...")
+	listenSocket.Close()
 	for i := 0; i < workinprogress; i++ {
 		endoftheworld <- true
 	}
 	ilog.Printf("waiting...")
+	go func() {
+		time.Sleep(10 * time.Second)
+		elog.Printf("timed out waiting for requests to finish")
+		os.Exit(0)
+	}()
 	for i := 0; i < workinprogress; i++ {
 		<-readyalready
 	}
+	requestWG.Wait()
 	ilog.Printf("apocalypse")
 	os.Exit(0)
 }
@@ -2719,7 +2731,9 @@ func bgmonitor() {
 }
 
 func addcspheaders(next http.Handler) http.Handler {
+	requestWG.Add(1)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer requestWG.Done()
 		policy := "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'"
 		if develMode {
 			policy += "; report-uri /csp-violation"
@@ -2940,9 +2954,9 @@ func serve() {
 	} else {
 		err = http.Serve(listener, mux)
 	}
-
-	err = http.Serve(listener, mux)
-	if err != nil {
-		elog.Fatal(err)
+	if err != nil && !errors.Is(err, net.ErrClosed) {
+		elog.Printf("serve error: %s", err)
 	}
+	time.Sleep(15 * time.Second)
+	elog.Printf("fell off the bottom")
 }
