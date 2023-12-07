@@ -2786,7 +2786,6 @@ func getassetparam(file string) string {
 func startWatcher() {
 	watcher, err := gonix.NewWatcher()
 	if err != nil {
-		elog.Printf("can't watch: %s", err)
 		return
 	}
 	go func() {
