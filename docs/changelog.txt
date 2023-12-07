@@ -2,6 +2,12 @@ changelog
 
 ### next
 
++ Update some dependencies.
+
++ Watch local.css for changes.
+
++ MacOS support. lol.
+
 + Wait for requests to drain on shutdown.
 
 + Handle quoteUrl property.
