@@ -69,8 +69,16 @@ func isSVG(data []byte) bool {
 	}
 	ct := http.DetectContentType(data)
 	if strings.HasPrefix(ct, "text/xml") || strings.HasPrefix(ct, "text/plain") {
-		if bytes.HasPrefix(data, []byte("<svg ")) || bytes.HasPrefix(data, []byte("<!DOCTYPE svg PUBLIC")) {
-			return true
+		// this seems suboptimal
+		prefixes := []string{
+			`<svg `,
+			`<!DOCTYPE svg PUBLIC`,
+			`<?xml version="1.0" encoding="UTF-8"?> <svg `,
+		}
+		for _, pre := range prefixes {
+			if bytes.HasPrefix(data, []byte(pre)) {
+				return true
+			}
 		}
 	}
 	return ct == "image/svg+xml"
