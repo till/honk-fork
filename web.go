@@ -2793,7 +2793,6 @@ func startWatcher() {
 		for {
 			err := watcher.WatchFile(s)
 			if err != nil {
-				dlog.Printf("can't watch: %s", err)
 				break
 			}
 			err = watcher.WaitForChange()

@@ -2,11 +2,13 @@
 <main>
 <div class="info" id="infobox">
 <div id="srvmsg">
+<div>
 {{ if .Name }}
 <p>{{ .Name }} <span class="left1em"><a href="/u/{{ .Name }}/rss">rss</a></span>
 <p>{{ .WhatAbout }}
 {{ end }}
 {{ .ServerMessage }}
+</div>
 </div>
 {{ if .HonkCSRF }}
 {{ template "honkform.html" . }}
