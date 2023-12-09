@@ -805,6 +805,7 @@ func showuser(w http.ResponseWriter, r *http.Request) {
 	templinfo["PageName"] = "user"
 	templinfo["PageArg"] = name
 	templinfo["Name"] = user.Name
+	templinfo["Honkology"] = oguser(user)
 	templinfo["WhatAbout"] = user.HTAbout
 	templinfo["ServerMessage"] = ""
 	templinfo["APAltLink"] = templates.Sprintf("<link href='%s' rel='alternate' type='application/activity+json'>", user.URL)
@@ -1175,6 +1176,22 @@ func threadsort(honks []*Honk) []*Honk {
 		}
 	}
 	return thread
+}
+
+func oguser(user *WhatAbout) template.HTML {
+	short := user.About
+	if len(short) > 160 {
+		short = short[0:160] + "..."
+	}
+	title := user.Display
+	imgurl := avatarURL(user)
+	return templates.Sprintf(
+		`<meta property="og:title" content="%s" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="%s" />
+<meta property="og:image" content="%s" />
+<meta property="og:description" content="%s" />`,
+		title, user.URL, imgurl, short)
 }
 
 func honkology(honk *Honk) template.HTML {
