@@ -101,11 +101,11 @@ func PostMsg(keyname string, key httpsig.PrivateKey, url string, msg []byte) err
 }
 
 func GetJunk(userid int64, url string) (junk.Junk, error) {
-	return GetJunkTimeout(userid, url, slowTimeout*time.Second)
+	return GetJunkTimeout(userid, url, slowTimeout*time.Second, nil)
 }
 
 func GetJunkFast(userid int64, url string) (junk.Junk, error) {
-	return GetJunkTimeout(userid, url, fastTimeout*time.Second)
+	return GetJunkTimeout(userid, url, fastTimeout*time.Second, nil)
 }
 
 func GetJunkHardMode(userid int64, url string) (junk.Junk, error) {
@@ -128,9 +128,12 @@ func GetJunkHardMode(userid int64, url string) (junk.Junk, error) {
 
 var flightdeck = gate.NewSerializer()
 
-func GetJunkTimeout(userid int64, url string, timeout time.Duration) (junk.Junk, error) {
+func GetJunkTimeout(userid int64, url string, timeout time.Duration, final *string) (junk.Junk, error) {
 	if rejectorigin(userid, url, false) {
 		return nil, fmt.Errorf("rejected origin: %s", url)
+	}
+	if final != nil {
+		*final = url
 	}
 	sign := func(req *http.Request) error {
 		var ki *KeyInfo
@@ -147,6 +150,9 @@ func GetJunkTimeout(userid int64, url string, timeout time.Duration) (junk.Junk,
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		if len(via) >= 5 {
 			return fmt.Errorf("stopped after 5 redirects")
+		}
+		if final != nil {
+			*final = req.URL.String()
 		}
 		if sign != nil {
 			sign(req)
@@ -481,7 +487,7 @@ func firstofmany(obj junk.Junk, key string) string {
 }
 
 var re_mast0link = regexp.MustCompile(`https://[[:alnum:].]+/users/[[:alnum:]]+/statuses/[[:digit:]]+`)
-var re_masto1ink = regexp.MustCompile(`https://([[:alnum:].]+)/@([[:alnum:]]+)/([[:digit:]]+)`)
+var re_masto1ink = regexp.MustCompile(`https://([[:alnum:].]+)/@([[:alnum:]]+)(@[[:alnum:].]+)?/([[:digit:]]+)`)
 var re_misslink = regexp.MustCompile(`https://[[:alnum:].]+/notes/[[:alnum:]]+`)
 var re_honklink = regexp.MustCompile(`https://[[:alnum:].]+/u/[[:alnum:]]+/h/[[:alnum:]]+`)
 var re_r0malink = regexp.MustCompile(`https://[[:alnum:].]+/objects/[[:alnum:]-]+`)
@@ -515,7 +521,6 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				re_roma1ink.MatchString(m) {
 				tryit = true
 			} else if re_masto1ink.MatchString(m) {
-				m = re_masto1ink.ReplaceAllString(m, "https://$1/users/$2/statuses/$3")
 				tryit = true
 			}
 			if tryit {
@@ -523,16 +528,17 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				if m == qurl {
 					prefix += fmt.Sprintf("<p><a href=\"%s\">%s</a>", m, m)
 				}
+				var final string
 				if x := getxonk(user.ID, m); x != nil {
 					content = fmt.Sprintf("%s%s<blockquote>%s</blockquote>", content, prefix, x.Noise)
-				} else if j, err := GetJunk(user.ID, m); err == nil {
+				} else if j, err := GetJunkTimeout(user.ID, m, fastTimeout*time.Second, &final); err == nil {
 					q, ok := j.GetString("content")
 					if ok {
 						content = fmt.Sprintf("%s%s<blockquote>%s</blockquote>", content, prefix, q)
 					}
 					prevdepth := depth
 					depth = maxdepth
-					xonkxonkfn(j, originate(m), false, "")
+					xonkxonkfn(j, originate(final), false, "")
 					depth = prevdepth
 				}
 			}
