@@ -59,13 +59,18 @@ func friendorfoe(ct string) bool {
 	return false
 }
 
-var honkClient = http.Client{}
+var honkTransport = http.Transport{
+	MaxIdleConns:    120,
+	MaxConnsPerHost: 4,
+}
+
+var honkClient = http.Client{
+	Transport: &honkTransport,
+}
 
 func gogglesDoNothing() {
-	honkClient.Transport = &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
+	honkTransport.TLSClientConfig = &tls.Config{
+		InsecureSkipVerify: true,
 	}
 }
 
