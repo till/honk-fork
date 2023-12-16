@@ -2748,8 +2748,8 @@ func bgmonitor() {
 }
 
 func addcspheaders(next http.Handler) http.Handler {
-	requestWG.Add(1)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requestWG.Add(1)
 		defer requestWG.Done()
 		policy := "default-src 'none'; script-src 'self'; connect-src 'self'; style-src 'self'; img-src 'self'; media-src 'self'"
 		if develMode {
