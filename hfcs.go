@@ -266,9 +266,12 @@ func rejectactor(userid int64, actor string) bool {
 			continue
 		}
 		if f.Actor == origin {
-			if f.OnlyUnknowns && unknownActor(userid, actor) {
-				ilog.Printf("rejecting unknown actor: %s", actor)
-				return true
+			if f.OnlyUnknowns {
+				if unknownActor(userid, actor) {
+					ilog.Printf("rejecting unknown actor: %s", actor)
+					return true
+				}
+				continue
 			}
 			ilog.Printf("rejecting actor: %s", actor)
 			return true
