@@ -74,6 +74,9 @@ func letitslide(err error) bool {
 	if strings.Contains(str, "http post status: 400") {
 		return true
 	}
+	if strings.Contains(str, "http post status: 422") {
+		return true
+	}
 	return false
 }
 
