@@ -2791,26 +2791,16 @@ func serve() {
 	loadLingo()
 	emuinit()
 
-	readviews = templates.Load(develMode,
-		viewDir+"/views/honkpage.html",
-		viewDir+"/views/honkfrags.html",
-		viewDir+"/views/honkers.html",
-		viewDir+"/views/chatter.html",
-		viewDir+"/views/hfcs.html",
-		viewDir+"/views/combos.html",
-		viewDir+"/views/honkform.html",
-		viewDir+"/views/honk.html",
-		viewDir+"/views/account.html",
-		viewDir+"/views/about.html",
-		viewDir+"/views/funzone.html",
-		viewDir+"/views/login.html",
-		viewDir+"/views/xzone.html",
-		viewDir+"/views/msg.html",
-		viewDir+"/views/header.html",
-		viewDir+"/views/onts.html",
-		viewDir+"/views/emus.html",
-		viewDir+"/views/honkpage.js",
-	)
+	var toload []string
+	dents, _ := os.ReadDir(viewDir + "/views")
+	for _, dent := range dents {
+		name := dent.Name()
+		if strings.HasSuffix(name, ".html") {
+			toload = append(toload, viewDir+"/views/"+name)
+		}
+	}
+
+	readviews = templates.Load(develMode, toload...)
 	if !develMode {
 		assets := []string{
 			viewDir + "/views/style.css",
