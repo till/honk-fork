@@ -443,7 +443,7 @@ func inbox(w http.ResponseWriter, r *http.Request) {
 		if keyname != "" {
 			ilog.Printf("bad signature from %s", keyname)
 		}
-		http.Error(w, "what did you call me?", http.StatusTeapot)
+		http.Error(w, "what did you call me?", http.StatusUnauthorized)
 		return
 	}
 	origin := keymatch(keyname, who)
@@ -556,7 +556,7 @@ func serverinbox(w http.ResponseWriter, r *http.Request) {
 		if keyname != "" {
 			ilog.Printf("bad signature from %s", keyname)
 		}
-		http.Error(w, "what did you call me?", http.StatusTeapot)
+		http.Error(w, "what did you call me?", http.StatusUnauthorized)
 		return
 	}
 	who, _ := j.GetString("actor")
