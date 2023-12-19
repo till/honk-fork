@@ -2234,58 +2234,6 @@ func hfcspage(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func savehfcs(w http.ResponseWriter, r *http.Request) {
-	userinfo := login.GetUserInfo(r)
-	itsok := r.FormValue("itsok")
-	if itsok == "iforgiveyou" {
-		hfcsid, _ := strconv.ParseInt(r.FormValue("hfcsid"), 10, 0)
-		_, err := stmtDeleteFilter.Exec(userinfo.UserID, hfcsid)
-		if err != nil {
-			elog.Printf("error deleting filter: %s", err)
-		}
-		filtInvalidator.Clear(userinfo.UserID)
-		http.Redirect(w, r, "/hfcs", http.StatusSeeOther)
-		return
-	}
-
-	filt := new(Filter)
-	filt.Name = strings.TrimSpace(r.FormValue("name"))
-	filt.Date = time.Now().UTC()
-	filt.Actor = strings.TrimSpace(r.FormValue("actor"))
-	filt.IncludeAudience = r.FormValue("incaud") == "yes"
-	filt.Text = strings.TrimSpace(r.FormValue("filttext"))
-	filt.IsReply = r.FormValue("isreply") == "yes"
-	filt.IsAnnounce = r.FormValue("isannounce") == "yes"
-	filt.AnnounceOf = strings.TrimSpace(r.FormValue("announceof"))
-	filt.Reject = r.FormValue("doreject") == "yes"
-	filt.SkipMedia = r.FormValue("doskipmedia") == "yes"
-	filt.Hide = r.FormValue("dohide") == "yes"
-	filt.Collapse = r.FormValue("docollapse") == "yes"
-	filt.Rewrite = strings.TrimSpace(r.FormValue("filtrewrite"))
-	filt.Replace = strings.TrimSpace(r.FormValue("filtreplace"))
-	if dur := parseDuration(r.FormValue("filtduration")); dur > 0 {
-		filt.Expiration = time.Now().UTC().Add(dur)
-	}
-	filt.Notes = strings.TrimSpace(r.FormValue("filtnotes"))
-
-	if filt.Actor == "" && filt.Text == "" && !filt.IsAnnounce {
-		ilog.Printf("blank filter")
-		http.Error(w, "can't save a blank filter", http.StatusInternalServerError)
-		return
-	}
-
-	j, err := jsonify(filt)
-	if err == nil {
-		_, err = stmtSaveFilter.Exec(userinfo.UserID, j)
-	}
-	if err != nil {
-		elog.Printf("error saving filter: %s", err)
-	}
-
-	filtInvalidator.Clear(userinfo.UserID)
-	http.Redirect(w, r, "/hfcs", http.StatusSeeOther)
-}
-
 func accountpage(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
 	user, _ := butwhatabout(u.Username)
