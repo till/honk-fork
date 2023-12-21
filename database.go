@@ -29,7 +29,7 @@ import (
 	"sync"
 	"time"
 
-	"humungus.tedunangst.com/r/webs/cache"
+	"humungus.tedunangst.com/r/webs/gencache"
 	"humungus.tedunangst.com/r/webs/htfilter"
 	"humungus.tedunangst.com/r/webs/httpsig"
 	"humungus.tedunangst.com/r/webs/login"
@@ -67,7 +67,7 @@ func userfromrow(row *sql.Row) (*WhatAbout, error) {
 	return user, nil
 }
 
-var somenamedusers = cache.New(cache.Options{Filler: func(name string) (*WhatAbout, bool) {
+var somenamedusers = gencache.New(gencache.Options[string, *WhatAbout]{Fill: func(name string) (*WhatAbout, bool) {
 	row := stmtUserByName.QueryRow(name)
 	user, err := userfromrow(row)
 	if err != nil {
@@ -81,7 +81,7 @@ var somenamedusers = cache.New(cache.Options{Filler: func(name string) (*WhatAbo
 	return user, true
 }})
 
-var somenumberedusers = cache.New(cache.Options{Filler: func(userid int64) (*WhatAbout, bool) {
+var somenumberedusers = gencache.New(gencache.Options[int64, *WhatAbout]{Fill: func(userid int64) (*WhatAbout, bool) {
 	row := stmtUserByNumber.QueryRow(userid)
 	user, err := userfromrow(row)
 	if err != nil {
@@ -93,8 +93,7 @@ var somenumberedusers = cache.New(cache.Options{Filler: func(userid int64) (*Wha
 }})
 
 func getserveruser() *WhatAbout {
-	var user *WhatAbout
-	ok := somenumberedusers.Get(serverUID, &user)
+	user, ok := somenumberedusers.Get(serverUID)
 	if !ok {
 		elog.Panicf("lost server user")
 	}
@@ -102,15 +101,14 @@ func getserveruser() *WhatAbout {
 }
 
 func butwhatabout(name string) (*WhatAbout, error) {
-	var user *WhatAbout
-	ok := somenamedusers.Get(name, &user)
+	user, ok := somenamedusers.Get(name)
 	if !ok {
 		return nil, fmt.Errorf("no user: %s", name)
 	}
 	return user, nil
 }
 
-var honkerinvalidator cache.Invalidator
+var honkerinvalidator gencache.Invalidator[int64]
 
 func gethonkers(userid int64) []*Honker {
 	rows, err := stmtHonkers.Query(userid)
@@ -652,8 +650,7 @@ func savechonk(ch *Chonk) error {
 }
 
 func chatplusone(tx *sql.Tx, userid int64) {
-	var user *WhatAbout
-	ok := somenumberedusers.Get(userid, &user)
+	user, ok := somenumberedusers.Get(userid)
 	if !ok {
 		return
 	}
@@ -671,8 +668,7 @@ func chatplusone(tx *sql.Tx, userid int64) {
 }
 
 func chatnewnone(userid int64) {
-	var user *WhatAbout
-	ok := somenumberedusers.Get(userid, &user)
+	user, ok := somenumberedusers.Get(userid)
 	if !ok || user.Options.ChatCount == 0 {
 		return
 	}
@@ -691,8 +687,7 @@ func chatnewnone(userid int64) {
 }
 
 func meplusone(tx *sql.Tx, userid int64) {
-	var user *WhatAbout
-	ok := somenumberedusers.Get(userid, &user)
+	user, ok := somenumberedusers.Get(userid)
 	if !ok {
 		return
 	}
@@ -710,8 +705,7 @@ func meplusone(tx *sql.Tx, userid int64) {
 }
 
 func menewnone(userid int64) {
-	var user *WhatAbout
-	ok := somenumberedusers.Get(userid, &user)
+	user, ok := somenumberedusers.Get(userid)
 	if !ok || user.Options.MeCount == 0 {
 		return
 	}

@@ -25,6 +25,7 @@ import (
 	"unicode"
 
 	"humungus.tedunangst.com/r/webs/cache"
+	"humungus.tedunangst.com/r/webs/gencache"
 	"humungus.tedunangst.com/r/webs/login"
 )
 
@@ -72,12 +73,15 @@ func (ft filtType) String() string {
 
 type afiltermap map[filtType][]*Filter
 
-var filtInvalidator cache.Invalidator
-var filtcache *cache.Cache
+var filtInvalidator gencache.Invalidator[int64]
+var filtcache *gencache.Cache[int64, afiltermap]
 
 func init() {
 	// resolve init loop
-	filtcache = cache.New(cache.Options{Filler: filtcachefiller, Invalidator: &filtInvalidator})
+	filtcache = gencache.New(gencache.Options[int64, afiltermap]{
+		Fill:        filtcachefiller,
+		Invalidator: &filtInvalidator,
+	})
 }
 
 func filtcachefiller(userid int64) (afiltermap, bool) {
@@ -185,8 +189,7 @@ func filtcacheclear(userid int64, dur time.Duration) {
 }
 
 func getfilters(userid int64, scope filtType) []*Filter {
-	var filtmap afiltermap
-	ok := filtcache.Get(userid, &filtmap)
+	filtmap, ok := filtcache.Get(userid)
 	if ok {
 		return filtmap[scope]
 	}
@@ -197,7 +200,7 @@ type arejectmap map[string][]*Filter
 
 var rejectAnyKey = "..."
 
-var rejectcache = cache.New(cache.Options{Filler: func(userid int64) (arejectmap, bool) {
+var rejectcache = gencache.New(gencache.Options[int64, arejectmap]{Fill: func(userid int64) (arejectmap, bool) {
 	m := make(arejectmap)
 	filts := getfilters(userid, filtReject)
 	for _, f := range filts {
@@ -219,8 +222,7 @@ var rejectcache = cache.New(cache.Options{Filler: func(userid int64) (arejectmap
 }, Invalidator: &filtInvalidator})
 
 func rejectfilters(userid int64, name string) []*Filter {
-	var m arejectmap
-	rejectcache.Get(userid, &m)
+	m, _ := rejectcache.Get(userid)
 	return m[name]
 }
 
@@ -280,7 +282,7 @@ func rejectactor(userid int64, actor string) bool {
 	return false
 }
 
-var knownknowns = cache.New(cache.Options{Filler: func(userid int64) (map[string]bool, bool) {
+var knownknowns = gencache.New(gencache.Options[int64, map[string]bool]{Fill: func(userid int64) (map[string]bool, bool) {
 	m := make(map[string]bool)
 	honkers := gethonkers(userid)
 	for _, h := range honkers {
@@ -290,8 +292,7 @@ var knownknowns = cache.New(cache.Options{Filler: func(userid int64) (map[string
 }, Invalidator: &honkerinvalidator})
 
 func unknownActor(userid int64, actor string) bool {
-	var knowns map[string]bool
-	knownknowns.Get(userid, &knowns)
+	knowns, _ := knownknowns.Get(userid)
 	return !knowns[actor]
 }
 
@@ -387,8 +388,7 @@ func matchfilterX(h *Honk, f *Filter) string {
 }
 
 func rejectxonk(xonk *Honk) bool {
-	var m arejectmap
-	rejectcache.Get(xonk.UserID, &m)
+	m, _ := rejectcache.Get(xonk.UserID)
 	filts := m[rejectAnyKey]
 	filts = append(filts, m[xonk.Honker]...)
 	filts = append(filts, m[originate(xonk.Honker)]...)

@@ -42,7 +42,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"humungus.tedunangst.com/r/gonix"
-	"humungus.tedunangst.com/r/webs/cache"
 	"humungus.tedunangst.com/r/webs/gencache"
 	"humungus.tedunangst.com/r/webs/httpsig"
 	"humungus.tedunangst.com/r/webs/junk"
@@ -100,8 +99,7 @@ func getInfo(r *http.Request) map[string]interface{} {
 	if u := login.GetUserInfo(r); u != nil {
 		templinfo["UserInfo"], _ = butwhatabout(u.Username)
 		templinfo["UserStyle"] = getuserstyle(u)
-		var combos []string
-		combocache.Get(u.UserID, &combos)
+		combos, _ := combocache.Get(u.UserID)
 		templinfo["Combos"] = combos
 	}
 	return templinfo
@@ -338,8 +336,7 @@ func ping(user *WhatAbout, who string) {
 		ilog.Printf("nobody to ping!")
 		return
 	}
-	var box *Box
-	ok := boxofboxes.Get(who, &box)
+	box, ok := boxofboxes.Get(who)
 	if !ok {
 		ilog.Printf("no inbox to ping %s", who)
 		return
@@ -364,8 +361,7 @@ func ping(user *WhatAbout, who string) {
 }
 
 func pong(user *WhatAbout, who string, obj string) {
-	var box *Box
-	ok := boxofboxes.Get(who, &box)
+	box, ok := boxofboxes.Get(who)
 	if !ok {
 		ilog.Printf("no inbox to pong %s", who)
 		return
@@ -688,7 +684,7 @@ func xzone(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var oldoutbox = cache.New(cache.Options{Filler: func(name string) ([]byte, bool) {
+var oldoutbox = gencache.New(gencache.Options[string, []byte]{Fill: func(name string) ([]byte, bool) {
 	user, err := butwhatabout(name)
 	if err != nil {
 		return nil, false
@@ -726,8 +722,7 @@ func outbox(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	var j []byte
-	ok := oldoutbox.Get(name, &j)
+	j, ok := oldoutbox.Get(name)
 	if ok {
 		w.Header().Set("Content-Type", theonetruename)
 		w.Write(j)
@@ -736,7 +731,7 @@ func outbox(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var oldempties = cache.New(cache.Options{Filler: func(url string) ([]byte, bool) {
+var oldempties = gencache.New(gencache.Options[string, []byte]{Fill: func(url string) ([]byte, bool) {
 	colname := "/followers"
 	if strings.HasSuffix(url, "/following") {
 		colname = "/following"
@@ -764,8 +759,7 @@ func emptiness(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	var j []byte
-	ok := oldempties.Get(r.URL.Path, &j)
+	j, ok := oldempties.Get(r.URL.Path)
 	if ok {
 		w.Header().Set("Content-Type", theonetruename)
 		w.Write(j)
@@ -1195,8 +1189,7 @@ func oguser(user *WhatAbout) template.HTML {
 }
 
 func honkology(honk *Honk) template.HTML {
-	var user *WhatAbout
-	ok := somenumberedusers.Get(honk.UserID, &user)
+	user, ok := somenumberedusers.Get(honk.UserID)
 	if !ok {
 		return ""
 	}
@@ -2115,7 +2108,7 @@ func submitchonk(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/chatter", http.StatusSeeOther)
 }
 
-var combocache = cache.New(cache.Options{Filler: func(userid int64) ([]string, bool) {
+var combocache = gencache.New(gencache.Options[int64, []string]{Fill: func(userid int64) ([]string, bool) {
 	honkers := gethonkers(userid)
 	var combos []string
 	for _, h := range honkers {
@@ -2132,9 +2125,6 @@ var combocache = cache.New(cache.Options{Filler: func(userid int64) ([]string, b
 }, Invalidator: &honkerinvalidator})
 
 func showcombos(w http.ResponseWriter, r *http.Request) {
-	userinfo := login.GetUserInfo(r)
-	var combos []string
-	combocache.Get(userinfo.UserID, &combos)
 	templinfo := getInfo(r)
 	err := readviews.Execute(w, "combos.html", templinfo)
 	if err != nil {
@@ -2263,7 +2253,7 @@ func dochpass(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/account", http.StatusSeeOther)
 }
 
-var oldfingers = cache.New(cache.Options{Filler: func(orig string) ([]byte, bool) {
+var oldfingers = gencache.New(gencache.Options[string, []byte]{Fill: func(orig string) ([]byte, bool) {
 	if strings.HasPrefix(orig, "acct:") {
 		orig = orig[5:]
 	}
@@ -2306,8 +2296,7 @@ func fingerlicker(w http.ResponseWriter, r *http.Request) {
 
 	dlog.Printf("finger lick: %s", orig)
 
-	var j []byte
-	ok := oldfingers.Get(orig, &j)
+	j, ok := oldfingers.Get(orig)
 	if ok {
 		w.Header().Set("Content-Type", "application/jrd+json")
 		w.Write(j)

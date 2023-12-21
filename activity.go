@@ -30,8 +30,8 @@ import (
 	"strings"
 	"time"
 
-	"humungus.tedunangst.com/r/webs/cache"
 	"humungus.tedunangst.com/r/webs/gate"
+	"humungus.tedunangst.com/r/webs/gencache"
 	"humungus.tedunangst.com/r/webs/httpsig"
 	"humungus.tedunangst.com/r/webs/junk"
 	"humungus.tedunangst.com/r/webs/templates"
@@ -141,9 +141,8 @@ func GetJunkTimeout(userid int64, url string, timeout time.Duration, final *stri
 		*final = url
 	}
 	sign := func(req *http.Request) error {
-		var ki *KeyInfo
-		ok := ziggies.Get(userid, &ki)
-		if ok {
+		ki := ziggy(userid)
+		if ki != nil {
 			httpsig.SignRequest(ki.keyname, ki.seckey, req, nil)
 		}
 		return nil
@@ -349,7 +348,7 @@ type Box struct {
 	Shared string
 }
 
-var boxofboxes = cache.New(cache.Options{Filler: func(ident string) (*Box, bool) {
+var boxofboxes = gencache.New(gencache.Options[string, *Box]{Fill: func(ident string) (*Box, bool) {
 	var info string
 	row := stmtGetXonker.QueryRow(ident, "boxes")
 	err := row.Scan(&info)
@@ -1420,7 +1419,7 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 	return j, jo
 }
 
-var oldjonks = cache.New(cache.Options{Filler: func(xid string) ([]byte, bool) {
+var oldjonks = gencache.New(gencache.Options[string, []byte]{Fill: func(xid string) ([]byte, bool) {
 	row := stmtAnyXonk.QueryRow(xid)
 	honk := scanhonk(row)
 	if honk == nil || !honk.Public {
@@ -1445,8 +1444,7 @@ var oldjonks = cache.New(cache.Options{Filler: func(xid string) ([]byte, bool) {
 }, Limit: 128})
 
 func gimmejonk(xid string) ([]byte, bool) {
-	var j []byte
-	ok := oldjonks.Get(xid, &j)
+	j, ok := oldjonks.Get(xid)
 	return j, ok
 }
 
@@ -1460,8 +1458,7 @@ func boxuprcpts(user *WhatAbout, addresses []string, useshared bool) map[string]
 			rcpts[a] = true
 			continue
 		}
-		var box *Box
-		ok := boxofboxes.Get(a, &box)
+		box, ok := boxofboxes.Get(a)
 		if ok && useshared && box.Shared != "" {
 			rcpts["%"+box.Shared] = true
 		} else {
@@ -1537,8 +1534,7 @@ func honkworldwide(user *WhatAbout, honk *Honk) {
 			if h.XID == user.URL {
 				continue
 			}
-			var box *Box
-			ok := boxofboxes.Get(h.XID, &box)
+			box, ok := boxofboxes.Get(h.XID)
 			if ok && box.Shared != "" {
 				rcpts["%"+box.Shared] = true
 			} else {
@@ -1549,8 +1545,7 @@ func honkworldwide(user *WhatAbout, honk *Honk) {
 			if f[0] == '%' {
 				rcpts[f] = true
 			} else {
-				var box *Box
-				ok := boxofboxes.Get(f, &box)
+				box, ok := boxofboxes.Get(f)
 				if ok && box.Shared != "" {
 					rcpts["%"+box.Shared] = true
 				} else {
@@ -1583,8 +1578,7 @@ func collectiveaction(honk *Honk) {
 		j["target"] = fmt.Sprintf("https://%s/o/%s", serverName, ont[1:])
 		rcpts := make(map[string]bool)
 		for _, dub := range dubs {
-			var box *Box
-			ok := boxofboxes.Get(dub.XID, &box)
+			box, ok := boxofboxes.Get(dub.XID)
 			if ok && box.Shared != "" {
 				rcpts["%"+box.Shared] = true
 			} else {
@@ -1649,7 +1643,7 @@ func junkuser(user *WhatAbout) junk.Junk {
 	return j
 }
 
-var oldjonkers = cache.New(cache.Options{Filler: func(name string) ([]byte, bool) {
+var oldjonkers = gencache.New(gencache.Options[string, []byte]{Fill: func(name string) ([]byte, bool) {
 	user, err := butwhatabout(name)
 	if err != nil {
 		return nil, false
@@ -1659,12 +1653,11 @@ var oldjonkers = cache.New(cache.Options{Filler: func(name string) ([]byte, bool
 }, Duration: 1 * time.Minute})
 
 func asjonker(name string) ([]byte, bool) {
-	var j []byte
-	ok := oldjonkers.Get(name, &j)
+	j, ok := oldjonkers.Get(name)
 	return j, ok
 }
 
-var handfull = cache.New(cache.Options{Filler: func(name string) (string, bool) {
+var handfull = gencache.New(gencache.Options[string, string]{Fill: func(name string) (string, bool) {
 	m := strings.Split(name, "@")
 	if len(m) != 2 {
 		dlog.Printf("bad fish name: %s", name)
@@ -1707,8 +1700,7 @@ func gofish(name string) string {
 	if name[0] == '@' {
 		name = name[1:]
 	}
-	var href string
-	handfull.Get(name, &href)
+	href, _ := handfull.Get(name)
 	return href
 }
 
@@ -1872,8 +1864,7 @@ func ingesthandle(origin string, obj junk.Junk) {
 }
 
 func updateMe(username string) {
-	var user *WhatAbout
-	somenamedusers.Get(username, &user)
+	user, _ := somenamedusers.Get(username)
 	dt := time.Now().UTC().Format(time.RFC3339)
 	j := junk.New()
 	j["@context"] = itiswhatitis
@@ -1891,9 +1882,8 @@ func updateMe(username string) {
 		if f.XID == user.URL {
 			continue
 		}
-		var box *Box
-		boxofboxes.Get(f.XID, &box)
-		if box != nil && box.Shared != "" {
+		box, ok := boxofboxes.Get(f.XID)
+		if ok && box.Shared != "" {
 			rcpts["%"+box.Shared] = true
 		} else {
 			rcpts[f.XID] = true
