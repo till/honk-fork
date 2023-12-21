@@ -346,10 +346,11 @@ func matchfilterX(h *Honk, f *Filter) string {
 	}
 	if match && f.IsAnnounce {
 		match = false
-		if (f.AnnounceOf == "" && h.Oonker != "") || f.AnnounceOf == h.Oonker ||
-			f.AnnounceOf == originate(h.Oonker) {
-			match = true
-			rv += " announce"
+		if h.Oonker != "" {
+			if f.AnnounceOf == "" || f.AnnounceOf == h.Oonker || f.AnnounceOf == originate(h.Oonker) {
+				match = true
+				rv += " announce"
+			}
 		}
 	}
 	if match && f.Text != "" && f.Text != "." {
