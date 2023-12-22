@@ -1,5 +1,9 @@
 changelog
 
+### next
+
+- Remove the hoot: feature. The bird is dead.
+
 ### 1.2.0 Forgotten Followup
 
 + Filter option to match unknown actors.

@@ -1850,7 +1850,6 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 		})
 	}
 	noise = quickrename(noise, userinfo.UserID)
-	noise = hooterize(noise)
 	honk.Noise = noise
 	precipitate(honk)
 	noise = honk.Noise
