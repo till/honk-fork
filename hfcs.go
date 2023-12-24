@@ -297,8 +297,7 @@ func unknownActor(userid int64, actor string) bool {
 }
 
 func stealthmode(userid int64, r *http.Request) bool {
-	agent := r.UserAgent()
-	agent = originate(agent)
+	agent := requestActor(r)
 	if agent != "" {
 		fake := rejectorigin(userid, agent, false)
 		if fake {

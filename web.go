@@ -1078,16 +1078,17 @@ func tracker() {
 
 var re_keyholder = regexp.MustCompile(`keyId="([^"]+)"`)
 
-func trackback(xid string, r *http.Request) {
-	agent := r.UserAgent()
-	who := originate(agent)
-	sig := r.Header.Get("Signature")
-	if sig != "" {
-		m := re_keyholder.FindStringSubmatch(sig)
-		if len(m) == 2 {
-			who = m[1]
+func requestActor(r *http.Request) string {
+	if sig := r.Header.Get("Signature"); sig != "" {
+		if m := re_keyholder.FindStringSubmatch(sig); len(m) == 2 {
+			return m[1]
 		}
 	}
+	return ""
+}
+
+func trackback(xid string, r *http.Request) {
+	who := requestActor(r)
 	if who != "" {
 		trackchan <- Track{xid: xid, who: who}
 	}
