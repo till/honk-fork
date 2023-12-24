@@ -120,12 +120,13 @@ func GetJunkHardMode(userid int64, url string) (junk.Junk, error) {
 	j, err := GetJunk(userid, url)
 	if err != nil {
 		emsg := err.Error()
-		if emsg == "http get status: 502" || strings.Contains(emsg, "timeout") {
-			ilog.Printf("trying again after error: %s", emsg)
+		if emsg == "http get status: 429" || emsg == "http get status: 502" ||
+			strings.Contains(emsg, "timeout") {
+			ilog.Printf("trying %s again after error: %s", url, emsg)
 			time.Sleep(time.Duration(60+notrand.Int63n(60)) * time.Second)
 			j, err = GetJunk(userid, url)
 			if err != nil {
-				ilog.Printf("still couldn't get it")
+				ilog.Printf("still couldn't get %s", url)
 			} else {
 				ilog.Printf("retry success!")
 			}
