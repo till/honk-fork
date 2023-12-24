@@ -101,7 +101,7 @@ func PostMsg(keyname string, key httpsig.PrivateKey, url string, msg []byte) err
 	default:
 		var buf [4096]byte
 		n, _ := resp.Body.Read(buf[:])
-		dlog.Printf("post failure message: %s", buf[n:])
+		dlog.Printf("post failure message: %s", buf[:n])
 		return fmt.Errorf("http post status: %d", resp.StatusCode)
 	}
 	ilog.Printf("successful post: %s %d", url, resp.StatusCode)
