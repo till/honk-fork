@@ -2,6 +2,8 @@ changelog
 
 ### next
 
++ Dim images in darkmode.
+
 - Remove the hoot: feature. The bird is dead.
 
 ### 1.2.0 Forgotten Followup
