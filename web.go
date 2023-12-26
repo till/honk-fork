@@ -1322,31 +1322,11 @@ func saveuser(w http.ResponseWriter, r *http.Request) {
 	db := opendatabase()
 
 	options := user.Options
-	if r.FormValue("skinny") == "skinny" {
-		options.SkinnyCSS = true
-	} else {
-		options.SkinnyCSS = false
-	}
-	if r.FormValue("omitimages") == "omitimages" {
-		options.OmitImages = true
-	} else {
-		options.OmitImages = false
-	}
-	if r.FormValue("mentionall") == "mentionall" {
-		options.MentionAll = true
-	} else {
-		options.MentionAll = false
-	}
-	if r.FormValue("inlineqts") == "inlineqts" {
-		options.InlineQuotes = true
-	} else {
-		options.InlineQuotes = false
-	}
-	if r.FormValue("maps") == "apple" {
-		options.MapLink = "apple"
-	} else {
-		options.MapLink = ""
-	}
+	options.SkinnyCSS = r.FormValue("skinny") == "skinny"
+	options.OmitImages = r.FormValue("omitimages") == "omitimages"
+	options.MentionAll = r.FormValue("mentionall") == "mentionall"
+	options.InlineQuotes = r.FormValue("inlineqts") == "inlineqts"
+	options.MapLink = r.FormValue("maps")
 	options.Reaction = r.FormValue("reaction")
 
 	sendupdate := false
