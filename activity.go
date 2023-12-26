@@ -376,6 +376,15 @@ var boxofboxes = gencache.New(gencache.Options[string, *Box]{Fill: func(ident st
 	return nil, false
 }})
 
+var gettergate = gate.NewLimiter(1)
+
+func getsomemore(user *WhatAbout, page string) {
+	time.Sleep(5 * time.Second)
+	gettergate.Start()
+	defer gettergate.Finish()
+	gimmexonks(user, page)
+}
+
 func gimmexonks(user *WhatAbout, outbox string) {
 	dlog.Printf("getting outbox: %s", outbox)
 	j, err := GetJunk(user.ID, outbox)
@@ -385,7 +394,7 @@ func gimmexonks(user *WhatAbout, outbox string) {
 	}
 	t, _ := j.GetString("type")
 	origin := originate(outbox)
-	if t == "OrderedCollection" {
+	if t == "OrderedCollection" || t == "CollectionPage" {
 		items, _ := j.GetArray("orderedItems")
 		if items == nil {
 			items, _ = j.GetArray("items")
@@ -1058,6 +1067,10 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 					first, ok := replyobj.GetMap("first")
 					if ok {
 						items, _ = first.GetArray("items")
+						next, _ := first.GetString("next")
+						if next != "" {
+							go getsomemore(user, next)
+						}
 					}
 				}
 				for _, repl := range items {
