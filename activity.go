@@ -1067,10 +1067,6 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 					first, ok := replyobj.GetMap("first")
 					if ok {
 						items, _ = first.GetArray("items")
-						next, _ := first.GetString("next")
-						if next != "" {
-							go getsomemore(user, next)
-						}
 					}
 				}
 				for _, repl := range items {
