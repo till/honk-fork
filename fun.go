@@ -163,7 +163,7 @@ func reverbolate(userid int64, honks []*Honk) {
 				}
 				if local && h.What != "bonked" {
 					emu, _ := emucache.Get(e)
-					if emu.ID != "" {
+					if emu != nil {
 						return fmt.Sprintf(`<img class="emu" title="%s" src="%s">`, emu.Name, emu.ID)
 					}
 				}
@@ -265,7 +265,7 @@ func filterchonk(ch *Chonk) {
 		}
 		if local {
 			emu, _ := emucache.Get(e)
-			if emu.ID != "" {
+			if emu != nil {
 				return fmt.Sprintf(`<img class="emu" title="%s" src="%s">`, emu.Name, emu.ID)
 			}
 		}
@@ -422,7 +422,7 @@ type Emu struct {
 
 var re_emus = regexp.MustCompile(`:[[:alnum:]_-]+:`)
 
-var emucache = gencache.New(gencache.Options[string, Emu]{Fill: func(ename string) (Emu, bool) {
+var emucache = gencache.New(gencache.Options[string, *Emu]{Fill: func(ename string) (*Emu, bool) {
 	fname := ename[1 : len(ename)-1]
 	exts := []string{".png", ".gif"}
 	for _, ext := range exts {
@@ -434,18 +434,18 @@ var emucache = gencache.New(gencache.Options[string, Emu]{Fill: func(ename strin
 		if develMode {
 			url = fmt.Sprintf("/emu/%s%s", fname, ext)
 		}
-		return Emu{ID: url, Name: ename, Type: "image/" + ext[1:]}, true
+		return &Emu{ID: url, Name: ename, Type: "image/" + ext[1:]}, true
 	}
-	return Emu{Name: ename, ID: "", Type: "image/png"}, true
+	return nil, true
 }, Duration: 10 * time.Second})
 
-func herdofemus(noise string) []Emu {
+func herdofemus(noise string) []*Emu {
 	m := re_emus.FindAllString(noise, -1)
 	m = oneofakind(m)
-	var emus []Emu
+	var emus []*Emu
 	for _, e := range m {
 		emu, _ := emucache.Get(e)
-		if emu.ID == "" {
+		if emu == nil {
 			continue
 		}
 		emus = append(emus, emu)
