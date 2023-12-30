@@ -43,8 +43,10 @@ var falsenames = []string{
 	`application/ld+json`,
 	`application/activity+json`,
 }
-var itiswhatitis = "https://www.w3.org/ns/activitystreams"
-var thewholeworld = "https://www.w3.org/ns/activitystreams#Public"
+
+const itiswhatitis = "https://www.w3.org/ns/activitystreams"
+const thewholeworld = "https://www.w3.org/ns/activitystreams#Public"
+const tinyworld = "as:Public"
 
 var fastTimeout time.Duration = 5
 var slowTimeout time.Duration = 30
@@ -800,6 +802,11 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		}
 		xonk.Audience = append(xonk.Audience, xonk.Honker)
 		xonk.Audience = oneofakind(xonk.Audience)
+		for i, a := range xonk.Audience {
+			if a == tinyworld {
+				xonk.Audience[i] = thewholeworld
+			}
+		}
 		xonk.Public = loudandproud(xonk.Audience)
 
 		var mentions []Mention
