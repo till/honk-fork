@@ -162,8 +162,8 @@ func reverbolate(userid int64, honks []*Honk) {
 					}
 				}
 				if local && h.What != "bonked" {
-					emu, ok := emucache.Get(e)
-					if ok {
+					emu, _ := emucache.Get(e)
+					if emu.ID != "" {
 						return fmt.Sprintf(`<img class="emu" title="%s" src="%s">`, emu.Name, emu.ID)
 					}
 				}
@@ -264,8 +264,8 @@ func filterchonk(ch *Chonk) {
 			}
 		}
 		if local {
-			emu, ok := emucache.Get(e)
-			if ok {
+			emu, _ := emucache.Get(e)
+			if emu.ID != "" {
 				return fmt.Sprintf(`<img class="emu" title="%s" src="%s">`, emu.Name, emu.ID)
 			}
 		}
@@ -444,8 +444,8 @@ func herdofemus(noise string) []Emu {
 	m = oneofakind(m)
 	var emus []Emu
 	for _, e := range m {
-		emu, ok := emucache.Get(e)
-		if !ok {
+		emu, _ := emucache.Get(e)
+		if emu.ID == "" {
 			continue
 		}
 		emus = append(emus, emu)
