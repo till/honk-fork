@@ -661,6 +661,11 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				return nil
 			}
 			bonker, _ = item.GetString("actor")
+			if originate(bonker) != origin {
+				ilog.Printf("out of bounds actor in bonk: %s not from %s", bonker, origin)
+				item.Write(ilog.Writer())
+				return nil
+			}
 			origin = originate(xid)
 			if ok && originate(id) == origin {
 				dlog.Printf("using object in announce for %s", xid)
@@ -682,7 +687,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				xid, _ = item.GetString("object")
 				dlog.Printf("getting created honk: %s", xid)
 				if originate(xid) != origin {
-					ilog.Printf("out of bounds %s not from %s", xid, origin)
+					ilog.Printf("out of bounds object in create: %s not from %s", xid, origin)
 					return nil
 				}
 				obj, err = GetJunkHardMode(user.ID, xid)
@@ -788,6 +793,11 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		xonk.Honker, _ = item.GetString("actor")
 		if xonk.Honker == "" {
 			xonk.Honker, _ = item.GetString("attributedTo")
+		}
+		if originate(xonk.Honker) != origin {
+			ilog.Printf("out of bounds honker %s from %s", xonk.Honker, origin)
+			item.Write(ilog.Writer())
+			return nil
 		}
 		if obj != nil {
 			if xonk.Honker == "" {
