@@ -532,6 +532,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		if qurl != "" {
 			mlinks = append(mlinks, ">"+qurl+"<")
 		}
+		mlinks = oneofakind(mlinks)
 		for _, m := range mlinks {
 			tryit := false
 			m = m[1 : len(m)-1]
