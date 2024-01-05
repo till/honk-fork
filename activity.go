@@ -47,6 +47,7 @@ var falsenames = []string{
 const itiswhatitis = "https://www.w3.org/ns/activitystreams"
 const thewholeworld = "https://www.w3.org/ns/activitystreams#Public"
 const tinyworld = "as:Public"
+const chatKeyProp = "chatKeyV0"
 
 var fastTimeout time.Duration = 5
 var slowTimeout time.Duration = 30
@@ -1117,9 +1118,25 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		imaginate(&xonk)
 
 		if what == "chonk" {
-			target, _ := obj.GetString("to")
+			// undo damage above
+			xonk.Noise = strings.TrimPrefix(xonk.Noise, "<p>")
+			target := firstofmany(obj, "to")
 			if target == user.URL {
 				target = xonk.Honker
+			}
+			enc, _ := obj.GetString(chatKeyProp)
+			if enc != "" {
+				var dec string
+				if pubkey, ok := getchatkey(xonk.Honker); ok {
+					dec, err = decryptString(xonk.Noise, user.ChatSecKey, pubkey)
+					if err != nil {
+						ilog.Printf("failed to decrypt chonk")
+					}
+				}
+				if err == nil {
+					dlog.Printf("successful decrypt from %s", xonk.Honker)
+					xonk.Noise = dec
+				}
 			}
 			ch := Chonk{
 				UserID: xonk.UserID,
@@ -1499,7 +1516,7 @@ func boxuprcpts(user *WhatAbout, addresses []string, useshared bool) map[string]
 	return rcpts
 }
 
-func chonkifymsg(user *WhatAbout, ch *Chonk) []byte {
+func chonkifymsg(user *WhatAbout, rcpt string, ch *Chonk) []byte {
 	dt := ch.Date.Format(time.RFC3339)
 	aud := []string{ch.Target}
 
@@ -1509,7 +1526,19 @@ func chonkifymsg(user *WhatAbout, ch *Chonk) []byte {
 	jo["published"] = dt
 	jo["attributedTo"] = user.URL
 	jo["to"] = aud
-	jo["content"] = ch.HTML
+	content := string(ch.HTML)
+	if user.ChatSecKey.key != nil {
+		if pubkey, ok := getchatkey(rcpt); ok {
+			var err error
+			content, err = encryptString(content, user.ChatSecKey, pubkey)
+			if err != nil {
+				ilog.Printf("failure encrypting chonk: %s", err)
+			}
+			jo[chatKeyProp] = user.Options.ChatPubKey
+		}
+	}
+	jo["content"] = content
+
 	atts := activatedonks(ch.Donks)
 	if len(atts) > 0 {
 		jo["attachment"] = atts
@@ -1544,11 +1573,10 @@ func chonkifymsg(user *WhatAbout, ch *Chonk) []byte {
 }
 
 func sendchonk(user *WhatAbout, ch *Chonk) {
-	msg := chonkifymsg(user, ch)
-
 	rcpts := make(map[string]bool)
 	rcpts[ch.Target] = true
 	for a := range rcpts {
+		msg := chonkifymsg(user, a, ch)
 		go deliverate(user.ID, a, msg)
 	}
 }
@@ -1670,6 +1698,7 @@ func junkuser(user *WhatAbout) junk.Junk {
 	k["owner"] = user.URL
 	k["publicKeyPem"] = user.Key
 	j["publicKey"] = k
+	j[chatKeyProp] = user.Options.ChatPubKey
 
 	return j
 }
@@ -1791,12 +1820,27 @@ func somethingabout(obj junk.Junk) (*SomeThing, error) {
 }
 
 func allinjest(origin string, obj junk.Junk) {
+	ident, _ := obj.GetString("id")
+	if ident == "" {
+		return
+	}
+	if originate(ident) != origin {
+		return
+	}
 	keyobj, ok := obj.GetMap("publicKey")
 	if ok {
 		ingestpubkey(origin, keyobj)
 	}
 	ingestboxes(origin, obj)
 	ingesthandle(origin, obj)
+	chatkey, ok := obj.GetString(chatKeyProp)
+	if ok {
+		when := time.Now().UTC().Format(dbtimeformat)
+		_, err := stmtSaveXonker.Exec(ident, chatkey, chatKeyProp, when)
+		if err != nil {
+			elog.Printf("error saving chatkey: %s", err)
+		}
+	}
 }
 
 func ingestpubkey(origin string, obj junk.Junk) {

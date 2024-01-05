@@ -57,6 +57,8 @@ func userfromrow(row *sql.Row) (*WhatAbout, error) {
 		if err != nil {
 			elog.Printf("error processing user options: %s", err)
 		}
+		user.ChatPubKey.key, _ = b64tokey(user.Options.ChatPubKey)
+		user.ChatSecKey.key, _ = b64tokey(user.Options.ChatSecKey)
 	} else {
 		user.URL = fmt.Sprintf("https://%s/%s", serverName, user.Name)
 	}
