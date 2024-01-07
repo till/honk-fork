@@ -1863,7 +1863,7 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 	} else if updatexid == "" {
 		honk.Audience = []string{thewholeworld}
 	}
-	if honk.Noise != "" && honk.Noise[0] == '@' {
+	if noise != "" && noise[0] == '@' {
 		honk.Audience = append(grapevine(honk.Mentions), honk.Audience...)
 	} else {
 		honk.Audience = append(honk.Audience, grapevine(honk.Mentions)...)
