@@ -131,7 +131,7 @@ function fillinhonks(xhr, glowit) {
 	var holder = honksonpage.children[0]
 	var lenhonks = honks.length
 	for (var i = honks.length; i > 0; i--) {
-		var h = honks[i-1]
+		var h = honks[frontload ? i-1 : 0]
 		if (glowit)
 			h.classList.add("glow")
 		if (frontload) {

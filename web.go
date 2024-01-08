@@ -1105,6 +1105,18 @@ func sameperson(h1, h2 *Honk) bool {
 	return n1 == n2
 }
 
+func threadposes(honks []*Honk, wanted int64) ([]*Honk, []int) {
+	var poses []int
+	var newhonks []*Honk
+	for i, honk := range honks {
+		if honk.ID > wanted {
+			newhonks = append(newhonks, honk)
+			poses = append(poses, i)
+		}
+	}
+	return newhonks, poses
+}
+
 func threadsort(honks []*Honk) []*Honk {
 	sort.Slice(honks, func(i, j int) bool {
 		return honks[i].Date.Before(honks[j].Date)
@@ -2415,6 +2427,7 @@ type Hydration struct {
 	Honks     string
 	MeCount   int64
 	ChatCount int64
+	Poses     []int
 }
 
 func webhydra(w http.ResponseWriter, r *http.Request) {
@@ -2458,10 +2471,10 @@ func webhydra(w http.ResponseWriter, r *http.Request) {
 		hydra.Srvmsg = templates.Sprintf("honks by combo: %s", c)
 	case "convoy":
 		c := r.FormValue("c")
-		honks = gethonksbyconvoy(userid, c, wanted)
+		honks = gethonksbyconvoy(userid, c, 0)
 		honks = osmosis(honks, userid, false)
 		honks = threadsort(honks)
-		reversehonks(honks)
+		honks, hydra.Poses = threadposes(honks, wanted)
 		hydra.Srvmsg = templates.Sprintf("honks in convoy: %s", c)
 	case "honker":
 		xid := r.FormValue("xid")
@@ -2482,7 +2495,11 @@ func webhydra(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(honks) > 0 {
-		hydra.Tophid = honks[0].ID
+		if page == "convoy" {
+			hydra.Tophid = honks[len(honks)-1].ID
+		} else {
+			hydra.Tophid = honks[0].ID
+		}
 	} else {
 		hydra.Tophid = wanted
 	}
