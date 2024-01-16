@@ -1102,8 +1102,8 @@ func cleanupdb(arg string) {
 	}
 
 	filexids := make(map[string]bool)
-	blobdb := openblobdb()
-	rows, err := blobdb.Query("select xid from filedata")
+	g_blobdb = openblobdb()
+	rows, err := g_blobdb.Query("select xid from filedata")
 	if err != nil {
 		elog.Fatal(err)
 	}
@@ -1126,7 +1126,7 @@ func cleanupdb(arg string) {
 		delete(filexids, xid)
 	}
 	rows.Close()
-	tx, err := blobdb.Begin()
+	tx, err := g_blobdb.Begin()
 	if err != nil {
 		elog.Fatal(err)
 	}
@@ -1140,6 +1140,7 @@ func cleanupdb(arg string) {
 	if err != nil {
 		elog.Fatal(err)
 	}
+	closedatabases()
 }
 
 var stmtHonkers, stmtDubbers, stmtNamedDubbers, stmtSaveHonker, stmtUpdateFlavor, stmtUpdateHonker *sql.Stmt
