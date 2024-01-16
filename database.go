@@ -1170,6 +1170,21 @@ func preparetodie(db *sql.DB, s string) *sql.Stmt {
 	return stmt
 }
 
+var g_blobdb *sql.DB
+
+func closedatabases() {
+	err := alreadyopendb.Close()
+	if err != nil {
+		elog.Printf("error closing database: %s", err)
+	}
+	if g_blobdb != nil {
+		err = g_blobdb.Close()
+		if err != nil {
+			elog.Printf("error closing database: %s", err)
+		}
+	}
+}
+
 func prepareStatements(db *sql.DB) {
 	stmtHonkers = preparetodie(db, "select honkerid, userid, name, xid, flavor, combos, meta from honkers where userid = ? and (flavor = 'presub' or flavor = 'sub' or flavor = 'peep' or flavor = 'unsub') order by name")
 	stmtSaveHonker = preparetodie(db, "insert into honkers (userid, name, xid, flavor, combos, owner, meta, folxid) values (?, ?, ?, ?, ?, ?, ?, '')")
@@ -1214,10 +1229,10 @@ func prepareStatements(db *sql.DB) {
 	stmtSaveDonk = preparetodie(db, "insert into donks (honkid, chonkid, fileid) values (?, ?, ?)")
 	stmtDeleteDonks = preparetodie(db, "delete from donks where honkid = ?")
 	stmtSaveFile = preparetodie(db, "insert into filemeta (xid, name, description, url, media, local) values (?, ?, ?, ?, ?, ?)")
-	blobdb := openblobdb()
-	stmtSaveFileData = preparetodie(blobdb, "insert into filedata (xid, media, hash, content) values (?, ?, ?, ?)")
-	stmtCheckFileData = preparetodie(blobdb, "select xid from filedata where hash = ?")
-	stmtGetFileData = preparetodie(blobdb, "select media, content from filedata where xid = ?")
+	g_blobdb = openblobdb()
+	stmtSaveFileData = preparetodie(g_blobdb, "insert into filedata (xid, media, hash, content) values (?, ?, ?, ?)")
+	stmtCheckFileData = preparetodie(g_blobdb, "select xid from filedata where hash = ?")
+	stmtGetFileData = preparetodie(g_blobdb, "select media, content from filedata where xid = ?")
 	stmtFindXonk = preparetodie(db, "select honkid from honks where userid = ? and xid = ?")
 	stmtFindFile = preparetodie(db, "select fileid, xid from filemeta where url = ? and local = 1")
 	stmtFindFileId = preparetodie(db, "select xid, local, description from filemeta where fileid = ? and url = ? and local = 1")

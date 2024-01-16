@@ -2666,6 +2666,7 @@ func enditall() {
 	}
 	requestWG.Wait()
 	ilog.Printf("apocalypse")
+	closedatabases()
 	os.Exit(0)
 }
 

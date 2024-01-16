@@ -141,6 +141,7 @@ func orphancheck() {
 	var b [1]byte
 	os.Stdin.Read(b[:])
 	dlog.Printf("backend shutting down")
+	closedatabases()
 	os.Exit(0)
 }
 
