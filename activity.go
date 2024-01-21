@@ -28,6 +28,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"humungus.tedunangst.com/r/webs/gate"
@@ -902,6 +903,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 			}
 
 			numatts := 0
+			var donkfns []func() *Donk
 			procatt := func(att junk.Junk) {
 				at, _ := att.GetString("type")
 				mt, _ := att.GetString("mediaType")
@@ -965,11 +967,10 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				if preferorig && !localize {
 					return
 				}
-				donk := savedonk(u, name, desc, mt, localize)
-				if donk != nil {
-					xonk.Donks = append(xonk.Donks, donk)
-				}
 				numatts++
+				donkfns = append(donkfns, func() *Donk {
+					return savedonk(u, name, desc, mt, localize)
+				})
 			}
 			if img, ok := obj.GetMap("image"); ok {
 				procatt(img)
@@ -997,6 +998,11 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 						continue
 					}
 					procatt(att)
+				}
+			}
+			for _, donk := range multiRun(donkfns) {
+				if donk != nil {
+					xonk.Donks = append(xonk.Donks, donk)
 				}
 			}
 			proctag := func(tag junk.Junk) {
@@ -2103,4 +2109,18 @@ func nofollowyou2(user *WhatAbout, j junk.Junk) {
 		elog.Printf("error updating honker: %s", err)
 		return
 	}
+}
+
+func multiRun[R any](fns []func() R) []R {
+	results := make([]R, len(fns))
+	var wg sync.WaitGroup
+	for i, fn := range fns {
+		wg.Add(1)
+		go func(i int, fn func() R) {
+			results[i] = fn()
+			wg.Done()
+		}(i, fn)
+	}
+	wg.Wait()
+	return results
 }
