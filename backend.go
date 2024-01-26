@@ -118,6 +118,15 @@ func callshrink(data []byte, params image.Params) (*image.Image, error) {
 	return res.Image, nil
 }
 
+func lilshrink(data []byte) (*image.Image, error) {
+	params := image.Params{
+		LimitSize: 14200 * 4200,
+		MaxWidth:  256,
+		MaxHeight: 256,
+		MaxSize:   16 * 1024,
+	}
+	return callshrink(data, params)
+}
 func bigshrink(data []byte) (*image.Image, error) {
 	params := image.Params{
 		LimitSize: 14200 * 4200,

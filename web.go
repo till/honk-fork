@@ -2393,6 +2393,7 @@ func servememe(w http.ResponseWriter, r *http.Request) {
 
 func servefile(w http.ResponseWriter, r *http.Request) {
 	xid := mux.Vars(r)["xid"]
+	preview := r.FormValue("preview") == "1"
 	var media string
 	var data []byte
 	row := stmtGetFileData.QueryRow(xid)
@@ -2401,6 +2402,12 @@ func servefile(w http.ResponseWriter, r *http.Request) {
 		elog.Printf("error loading file: %s", err)
 		http.NotFound(w, r)
 		return
+	}
+	if preview && strings.HasPrefix(media, "image") {
+		img, err := lilshrink(data)
+		if err == nil {
+			data = img.Data
+		}
 	}
 	w.Header().Set("Content-Type", media)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
