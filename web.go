@@ -32,6 +32,7 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
+	"runtime/pprof"
 	"sort"
 	"strconv"
 	"strings"
@@ -2661,6 +2662,13 @@ func enditall() {
 	listenSocket.Close()
 	for i := 0; i < workinprogress; i++ {
 		endoftheworld <- true
+	}
+	if *cpuprofile != "" {
+		pprof.StopCPUProfile()
+	}
+	if *memprofile != "" {
+		pprof.WriteHeapProfile(memprofilefd)
+		memprofilefd.Close()
 	}
 	ilog.Printf("waiting...")
 	go func() {
