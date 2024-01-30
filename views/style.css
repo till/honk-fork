@@ -369,6 +369,10 @@ img.emu {
 	details summary {
 		outline: none;
 	}
+	.noise img.donk {
+		max-height: 100px;
+		display: inline;
+	}
 }
 @media print {
 	#topmenu, #topspacer, #infobox, #refreshbox, .actions {
