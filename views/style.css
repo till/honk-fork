@@ -341,6 +341,7 @@ img, video {
 }
 .noise img.donk {
 	max-height: 400px;
+	max-width: 48%;
 	display: inline;
 }
 img.emu {
