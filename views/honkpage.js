@@ -19,14 +19,15 @@ function post(url, data) {
 	x.setRequestHeader("Content-Type", "application/x-www-form-urlencoded")
 	x.send(data)
 }
-function get(url, whendone, whentimedout) {
+function get(url, whendone, errfunction) {
 	var x = new XMLHttpRequest()
 	x.open("GET", url)
 	x.timeout = 15 * 1000
 	x.responseType = "json"
 	x.onload = function() { whendone(x) }
-	if (whentimedout) {
-		x.ontimeout = function(e) { whentimedout(x, e) }
+	if (errfunction) {
+		x.ontimeout = function(e) { errfunction(" timed out") }
+		x.onerror = function(e) { errfunction(" error") }
 	}
 	x.send()
 }
@@ -180,10 +181,10 @@ function refreshhonks(btn) {
 		} else {
 			refreshupdate(" status: " + xhr.status)
 		}
-	}, function(xhr, e) {
+	}, function(err) {
 		btn.innerHTML = "refresh"
 		btn.disabled = false
-		refreshupdate(" timed out")
+		refreshupdate(err)
 	})
 }
 function statechanger(evt) {
@@ -229,8 +230,8 @@ function switchtopage(name, arg) {
 			} else {
 				refreshupdate(" status: " + xhr.status)
 			}
-		}, function(xhr, e) {
-			refreshupdate(" timed out")
+		}, function(err) {
+			refreshupdate(err)
 		})
 	}
 	refreshupdate("")
