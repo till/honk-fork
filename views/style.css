@@ -335,10 +335,13 @@ img:not(.emu) {
 }
 img, video {
 	max-width: 100%;
-	max-height: 600px;
 }
 .noise img:not(.emu) {
 	display: block;
+}
+.noise img.donk {
+	max-height: 400px;
+	display: inline;
 }
 img.emu {
 	height: 2em;

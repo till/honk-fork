@@ -273,6 +273,16 @@ function relinklinks() {
 		el.onclick = pageswitcher("honker", xid)
 		el.classList.remove("honkerlink")
 	}
+	els = document.getElementsByClassName("donklink")
+	while (els.length) {
+		let el = els[0]
+		el.onclick = function() {
+			el.children[0].classList.remove("donk")
+			el.onclick = null
+			return false
+		}
+		el.classList.remove("donklink")
+	}
 
 	els = document.querySelectorAll("#honksonpage article button")
 	els.forEach(function(el) {
