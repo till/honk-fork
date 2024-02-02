@@ -2592,6 +2592,21 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 		case "myhonks":
 			honks = gethonksbyuser(u.Username, true, wanted)
 			honks = osmosis(honks, userid, true)
+		case "saved":
+			honks = getsavedhonks(userid, wanted)
+		case "combo":
+			c := r.FormValue("c")
+			honks = gethonksbycombo(userid, c, wanted)
+			honks = osmosis(honks, userid, false)
+		case "convoy":
+			c := r.FormValue("c")
+			honks = gethonksbyconvoy(userid, c, 0)
+			honks = osmosis(honks, userid, false)
+			honks = threadsort(honks)
+			honks, _ = threadposes(honks, wanted)
+		case "honker":
+			xid := r.FormValue("xid")
+			honks = gethonksbyxonker(userid, xid, wanted)
 		default:
 			http.Error(w, "unknown page", http.StatusNotFound)
 			return
