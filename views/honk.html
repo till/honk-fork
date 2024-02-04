@@ -65,24 +65,24 @@ in reply to: <a href="{{ .RID }}" rel=noreferrer>{{ .RID }}</a>
 {{ range .Donks }}
 {{ if .Local }}
 {{ if eq .Media "text/plain" }}
-<p><a href="/d/{{ .XID }}">Attachment: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}
+<p><a href="/d/{{ .XID }}">Attachment: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}</p>
 {{ else if eq .Media "application/pdf" }}
-<p><a href="/d/{{ .XID }}">Attachment: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}
+<p><a href="/d/{{ .XID }}">Attachment: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}</p>
 {{ else }}
 {{ if $omitimages }}
-<p><a href="/d/{{ .XID }}">Image: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}
+<p><a href="/d/{{ .XID }}">Image: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}</p>
 {{ else }}
 <a class="donklink" href="/d/{{.XID}}"><img class="donk" src="/d/{{ .XID }}" loading=lazy title="{{ .Desc }}" alt="{{ .Desc }}"></a>
 {{ end }}
 {{ end }}
 {{ else }}
 {{ if .External }}
-<p><a href="{{ .URL }}" rel=noreferrer>External Attachment: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}
+<p><a href="{{ .URL }}" rel=noreferrer>External Attachment: {{ .Name }}</a>{{ if not (eq .Desc .Name) }} {{ .Desc }}{{ end }}</p>
 {{ else }}
 {{ if eq .Media "video/mp4" }}
-<p><video controls src="{{ .URL }}">{{ .Name }}</video>
+<p><video controls src="{{ .URL }}">{{ .Name }}</video></p>
 {{ else }}
-<p><img src="{{ .URL }}" title="{{ .Desc }}" alt="{{ .Desc }}">
+<p><img src="{{ .URL }}" title="{{ .Desc }}" alt="{{ .Desc }}"></p>
 {{ end }}
 {{ end }}
 {{ end }}
