@@ -217,7 +217,7 @@ func fetchsome(url string) ([]byte, error) {
 		return nil, fmt.Errorf("http get not 200: %d %s", resp.StatusCode, url)
 	}
 	var buf bytes.Buffer
-	limiter := io.LimitReader(resp.Body, 10*1024*1024)
+	limiter := io.LimitReader(resp.Body, 14*1024*1024)
 	io.Copy(&buf, limiter)
 	return buf.Bytes(), nil
 }
