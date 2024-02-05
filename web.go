@@ -2608,6 +2608,9 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 		case "honker":
 			xid := r.FormValue("xid")
 			honks = gethonksbyxonker(userid, xid, wanted)
+		case "search":
+			q := r.FormValue("q")
+			honks = gethonksbysearch(u.UserID, q, wanted)
 		default:
 			http.Error(w, "unknown page", http.StatusNotFound)
 			return
