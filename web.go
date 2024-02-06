@@ -2550,7 +2550,6 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 	action := r.FormValue("action")
 	wait, _ := strconv.ParseInt(r.FormValue("wait"), 10, 0)
 	dlog.Printf("api request '%s' on behalf of %s", action, u.Username)
-	user, _ := butwhatabout(u.Username)
 	switch action {
 	case "honk":
 		h := submithonk(w, r)
@@ -2626,6 +2625,7 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		reverbolate(userid, honks)
+		user, _ := butwhatabout(u.Username)
 		j := junk.New()
 		j["honks"] = honks
 		j["mecount"] = user.Options.MeCount
@@ -2633,6 +2633,7 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 		j.Write(w)
 	case "sendactivity":
 		public := r.FormValue("public") == "1"
+		user, _ := butwhatabout(u.Username)
 		rcpts := boxuprcpts(user, r.Form["rcpt"], public)
 		msg := []byte(r.FormValue("msg"))
 		for rcpt := range rcpts {
