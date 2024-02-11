@@ -1287,6 +1287,9 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 	j["id"] = user.URL + "/" + h.What + "/" + shortxid(h.XID)
 	j["actor"] = user.URL
 	j["published"] = dt
+	if h.Public {
+		h.Audience = append(h.Audience, user.URL+"/followers")
+	}
 	j["to"] = h.Audience[0]
 	if len(h.Audience) > 1 {
 		j["cc"] = h.Audience[1:]
