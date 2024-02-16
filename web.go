@@ -2393,6 +2393,11 @@ func servememe(w http.ResponseWriter, r *http.Request) {
 }
 
 func servefile(w http.ResponseWriter, r *http.Request) {
+	if friendorfoe(r.Header.Get("Accept")) {
+		dlog.Printf("incompatible accept for donk")
+		http.Error(w, "there are no activities here", http.StatusNotAcceptable)
+		return
+	}
 	xid := mux.Vars(r)["xid"]
 	preview := r.FormValue("preview") == "1"
 	var media string
