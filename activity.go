@@ -175,12 +175,13 @@ func GetJunkTimeout(userid int64, url string, timeout time.Duration, final *stri
 		if strings.Contains(url, ".well-known/webfinger?resource") {
 			at = "application/jrd+json"
 		}
-		j, err := junk.Get(url, junk.GetArgs{
+		j, err := getsomejunk(url, junk.GetArgs{
 			Accept:  at,
 			Agent:   "honksnonk/5.0; " + serverName,
 			Timeout: timeout,
 			Client:  &client,
 			Fixup:   sign,
+			Limit:   1 * 1024 * 1024,
 		})
 		return j, err
 	}
@@ -191,6 +192,56 @@ func GetJunkTimeout(userid int64, url string, timeout time.Duration, final *stri
 	}
 	j := ji.(junk.Junk)
 	return j, nil
+}
+
+func getsomejunk(url string, args junk.GetArgs) (junk.Junk, error) {
+	client := http.DefaultClient
+	if args.Client != nil {
+		client = args.Client
+	}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if args.Accept != "" {
+		req.Header.Set("Accept", args.Accept)
+	}
+	if args.Agent != "" {
+		req.Header.Set("User-Agent", args.Agent)
+	}
+	if args.Fixup != nil {
+		err = args.Fixup(req)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if args.Timeout != 0 {
+		ctx, cancel := context.WithTimeout(context.Background(), args.Timeout)
+		defer cancel()
+		req = req.WithContext(ctx)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	switch resp.StatusCode {
+	case 200:
+	case 201:
+	case 202:
+	default:
+		return nil, fmt.Errorf("http get status: %d", resp.StatusCode)
+	}
+	ct := resp.Header.Get("Content-Type")
+	if !friendorfoe(ct) {
+		return nil, fmt.Errorf("incompatible content type %s", ct)
+	}
+	var r io.Reader = resp.Body
+	if args.Limit > 0 {
+		r = io.LimitReader(r, args.Limit)
+	}
+	return junk.Read(r)
 }
 
 func fetchsome(url string) ([]byte, error) {

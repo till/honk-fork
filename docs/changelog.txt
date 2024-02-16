@@ -1,5 +1,9 @@
 changelog
 
+### next
+
++ Ensure fetched activities are compatible content types.
+
 ### 1.2.1 Solipsist Satisfaction
 
 + Federation reliability and compat improvements.
