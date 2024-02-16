@@ -1,6 +1,10 @@
 changelog
 
-### next
+### 1.2.3 Regarded Reflection
+
++ Don't serve attachments to clients expecting activities.
+
+### 1.2.2 Nameless Neophyte
 
 + Ensure fetched activities are compatible content types.
 
