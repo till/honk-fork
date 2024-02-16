@@ -4,6 +4,12 @@ changelog
 
 + Ensure fetched activities are compatible content types.
 
++ Some federation interop improvements.
+
++ More complete API support.
+
++ More compact image arrangement.
+
 ### 1.2.1 Solipsist Satisfaction
 
 + Federation reliability and compat improvements.
