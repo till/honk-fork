@@ -234,7 +234,7 @@ func getsomejunk(url string, args junk.GetArgs) (junk.Junk, error) {
 		return nil, fmt.Errorf("http get status: %d", resp.StatusCode)
 	}
 	ct := resp.Header.Get("Content-Type")
-	if !friendorfoe(ct) {
+	if args.Accept != "application/jrd+json" && !friendorfoe(ct) {
 		return nil, fmt.Errorf("incompatible content type %s", ct)
 	}
 	var r io.Reader = resp.Body
