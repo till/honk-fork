@@ -45,6 +45,7 @@ var falsenames = []string{
 }
 
 const itiswhatitis = "https://www.w3.org/ns/activitystreams"
+const papersplease = "https://w3id.org/security/v1"
 const thewholeworld = "https://www.w3.org/ns/activitystreams#Public"
 const tinyworld = "as:Public"
 const chatKeyProp = "chatKeyV0"
@@ -1707,7 +1708,7 @@ func collectiveaction(honk *Honk) {
 
 func junkuser(user *WhatAbout) junk.Junk {
 	j := junk.New()
-	j["@context"] = itiswhatitis
+	j["@context"] = []string{itiswhatitis, papersplease}
 	j["id"] = user.URL
 	j["inbox"] = user.URL + "/inbox"
 	j["outbox"] = user.URL + "/outbox"
