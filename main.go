@@ -137,7 +137,7 @@ func main() {
 	if masqName == "" {
 		masqName = serverName
 	}
-	serverPrefix = fmt.Sprintf("https://%s/", serverName)
+	serverPrefix = serverURL("/")
 	getconfig("usersep", &userSep)
 	getconfig("honksep", &honkSep)
 	getconfig("devel", &develMode)

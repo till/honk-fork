@@ -227,7 +227,7 @@ func replaceimgsand(zap map[string]bool, absolute bool) func(node *html.Node) st
 			zap[d.XID] = true
 			base := ""
 			if absolute {
-				base = "https://" + serverName
+				base = serverURL("")
 			}
 			return string(templates.Sprintf(`<img alt="%s" title="%s" src="%s/d/%s">`, alt, alt, base, d.XID))
 		}
@@ -438,7 +438,7 @@ var emucache = gencache.New(gencache.Options[string, *Emu]{Fill: func(ename stri
 		if err != nil {
 			continue
 		}
-		url := fmt.Sprintf("https://%s/emu/%s%s", serverName, fname, ext)
+		url := serverURL("/emu/%s%s", fname, ext)
 		if develMode {
 			url = fmt.Sprintf("/emu/%s%s", fname, ext)
 		}
@@ -486,7 +486,7 @@ func memetize(honk *Honk) {
 		ct := http.DetectContentType(peek[:n])
 		fd.Close()
 
-		url := fmt.Sprintf("https://%s/meme/%s", serverName, name)
+		url := serverURL("/meme/%s", name)
 		fileid, err := savefile(name, name, url, ct, false, nil)
 		if err != nil {
 			elog.Printf("error saving meme: %s", err)
@@ -608,8 +608,8 @@ func attoreplacer(m string) string {
 }
 
 func ontoreplacer(h string) string {
-	return fmt.Sprintf(`<a class="mention hashtag" href="https://%s/o/%s">%s</a>`, serverName,
-		strings.ToLower(h[1:]), h)
+	return fmt.Sprintf(`<a class="mention hashtag" href="%s">%s</a>`,
+		serverURL("/o/%s", strings.ToLower(h[1:])), h)
 }
 
 var re_unurl = regexp.MustCompile("https://([^/]+).*/([^/]+)")
