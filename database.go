@@ -52,7 +52,7 @@ func userfromrow(row *sql.Row) (*WhatAbout, error) {
 		return nil, err
 	}
 	if user.ID > 0 {
-		user.URL = fmt.Sprintf("https://%s/%s/%s", serverName, userSep, user.Name)
+		user.URL = serverURL("/%s/%s", userSep, user.Name)
 		err = unjsonify(options, &user.Options)
 		if err != nil {
 			elog.Printf("error processing user options: %s", err)
@@ -60,7 +60,7 @@ func userfromrow(row *sql.Row) (*WhatAbout, error) {
 		user.ChatPubKey.key, _ = b64tokey(user.Options.ChatPubKey)
 		user.ChatSecKey.key, _ = b64tokey(user.Options.ChatSecKey)
 	} else {
-		user.URL = fmt.Sprintf("https://%s/%s", serverName, user.Name)
+		user.URL = serverURL("/%s", user.Name)
 	}
 	if user.Options.Reaction == "" {
 		user.Options.Reaction = "none"
@@ -585,7 +585,7 @@ func savefileandxid(name string, desc string, url string, media string, local bo
 			return 0, "", err
 		}
 		if url == "" {
-			url = fmt.Sprintf("https://%s/d/%s", serverName, xid)
+			url = serverURL("/d/%s", xid)
 		}
 	}
 

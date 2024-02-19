@@ -1419,7 +1419,7 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 			t := junk.New()
 			t["type"] = "Hashtag"
 			o = strings.ToLower(o)
-			t["href"] = fmt.Sprintf("https://%s/o/%s", serverName, o[1:])
+			t["href"] = serverURL("/o/%s", o[1:])
 			t["name"] = o
 			tags = append(tags, t)
 		}
@@ -1703,7 +1703,7 @@ func collectiveaction(honk *Honk) {
 		j["id"] = user.URL + "/add/" + shortxid(ont+honk.XID)
 		j["actor"] = user.URL
 		j["object"] = honk.XID
-		j["target"] = fmt.Sprintf("https://%s/o/%s", serverName, ont[1:])
+		j["target"] = serverURL("/o/%s", ont[1:])
 		rcpts := make(map[string]bool)
 		for _, dub := range dubs {
 			box, ok := boxofboxes.Get(dub.XID)
@@ -1734,7 +1734,7 @@ func junkuser(user *WhatAbout) junk.Junk {
 		t := junk.New()
 		t["type"] = "Hashtag"
 		o = strings.ToLower(o)
-		t["href"] = fmt.Sprintf("https://%s/o/%s", serverName, o[1:])
+		t["href"] = serverURL("/o/%s", o[1:])
 		t["name"] = o
 		tags = append(tags, t)
 	}

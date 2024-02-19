@@ -46,6 +46,10 @@ var serverMsg template.HTML
 var aboutMsg template.HTML
 var loginMsg template.HTML
 
+func serverURL(u string, args ...interface{}) string {
+	return fmt.Sprintf("https://"+serverName+u, args...)
+}
+
 func ElaborateUnitTests() {
 }
 

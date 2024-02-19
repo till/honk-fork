@@ -253,7 +253,7 @@ func showrss(w http.ResponseWriter, r *http.Request) {
 	}
 	reverbolate(-1, honks)
 
-	home := fmt.Sprintf("https://%s/", serverName)
+	home := serverURL("/")
 	base := home
 	if name != "" {
 		home += "u/" + name
@@ -330,7 +330,7 @@ func ping(user *WhatAbout, who string) {
 	if targ := fullname(who, user.ID); targ != "" {
 		who = targ
 	}
-	if !strings.HasPrefix(who, "https:") {
+	if !strings.HasPrefix(who, "https://") {
 		who = gofish(who)
 	}
 	if who == "" {
@@ -565,7 +565,7 @@ func serverinbox(w http.ResponseWriter, r *http.Request) {
 	if rejectactor(user.ID, who) {
 		return
 	}
-	re_ont := regexp.MustCompile("https://" + serverName + "/o/([\\pL[:digit:]]+)")
+	re_ont := regexp.MustCompile(serverURL("/o") + "/([\\pL[:digit:]]+)")
 	what := firstofmany(j, "type")
 	dlog.Printf("server got a %s", what)
 	switch what {
@@ -737,7 +737,7 @@ var oldempties = gencache.New(gencache.Options[string, []byte]{Fill: func(url st
 	if strings.HasSuffix(url, "/following") {
 		colname = "/following"
 	}
-	user := fmt.Sprintf("https://%s%s", serverName, url[:len(url)-10])
+	user := serverURL("%s", url[:len(url)-10])
 	j := junk.New()
 	j["@context"] = itiswhatitis
 	j["id"] = user + colname
@@ -900,7 +900,7 @@ func showontology(w http.ResponseWriter, r *http.Request) {
 
 		j := junk.New()
 		j["@context"] = itiswhatitis
-		j["id"] = fmt.Sprintf("https://%s/o/%s", serverName, name)
+		j["id"] = serverURL("/o/%s", name)
 		j["name"] = "#" + name
 		j["attributedTo"] = user.URL
 		j["type"] = "OrderedCollection"
@@ -1240,7 +1240,7 @@ func showonehonk(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	xid := fmt.Sprintf("https://%s%s", serverName, r.URL.Path)
+	xid := serverURL("%s", r.URL.Path)
 
 	if friendorfoe(r.Header.Get("Accept")) {
 		j, ok := gimmejonk(xid)
@@ -1350,7 +1350,7 @@ func saveuser(w http.ResponseWriter, r *http.Request) {
 		if ava[0] == ' ' {
 			ava = ava[1:]
 		}
-		ava = fmt.Sprintf("https://%s/meme/%s", serverName, ava)
+		ava = serverURL("/meme/%s", ava)
 	}
 	if ava != options.Avatar {
 		options.Avatar = ava
@@ -1363,7 +1363,7 @@ func saveuser(w http.ResponseWriter, r *http.Request) {
 		if ban[0] == ' ' {
 			ban = ban[1:]
 		}
-		ban = fmt.Sprintf("https://%s/meme/%s", serverName, ban)
+		ban = serverURL("/meme/%s", ban)
 	}
 	if ban != options.Banner {
 		options.Banner = ban
@@ -1786,7 +1786,8 @@ func websubmithonk(w http.ResponseWriter, r *http.Request) {
 	if h == nil {
 		return
 	}
-	http.Redirect(w, r, h.XID[len(serverName)+8:], http.StatusSeeOther)
+	redir := h.XID[len(serverURL("")):]
+	http.Redirect(w, r, redir, http.StatusSeeOther)
 }
 
 // what a hot mess this function is
@@ -1917,7 +1918,7 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 			}
 			p := strings.Split(xid, ":")
 			xid = p[0]
-			url := fmt.Sprintf("https://%s/d/%s", serverName, xid)
+			url := serverURL("/d/%s", xid)
 			var donk *Donk
 			if len(p) > 1 {
 				fileid, _ := strconv.ParseInt(p[1], 10, 0)
@@ -2254,7 +2255,7 @@ var oldfingers = gencache.New(gencache.Options[string, []byte]{Fill: func(orig s
 	idx := strings.LastIndexByte(name, '/')
 	if idx != -1 {
 		name = name[idx+1:]
-		if fmt.Sprintf("https://%s/%s/%s", serverName, userSep, name) != orig {
+		if serverURL("/%s/%s", userSep, name) != orig {
 			ilog.Printf("foreign request rejected")
 			name = ""
 		}
