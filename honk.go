@@ -93,6 +93,7 @@ type Honk struct {
 	Onts     []string
 	Place    *Place
 	Time     *Time
+	Link     string
 	Mentions []Mention
 	Badonks  []Badonk
 }

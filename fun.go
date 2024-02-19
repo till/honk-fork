@@ -83,6 +83,7 @@ func reverbolate(userid int64, honks []*Honk) {
 		if local && h.What != "bonked" {
 			h.Noise = re_retag.ReplaceAllString(h.Noise, "")
 			h.Noise = re_memes.ReplaceAllString(h.Noise, "")
+			h.Noise = re_cc.ReplaceAllString(h.Noise, "")
 		}
 		h.Username, h.Handle = handles(h.Honker)
 		if !local {
@@ -371,6 +372,8 @@ func redoimages(honk *Honk) {
 	honk.Donks = honk.Donks[:j]
 
 	honk.Noise = re_memes.ReplaceAllString(honk.Noise, "")
+	honk.Noise = re_retag.ReplaceAllString(honk.Noise, "")
+	honk.Noise = re_cc.ReplaceAllString(honk.Noise, "")
 	honk.Noise = strings.Replace(honk.Noise, "<a href=", "<a class=\"mention u-url\" href=", -1)
 }
 
@@ -463,6 +466,8 @@ var re_avatar = regexp.MustCompile("avatar: ?([^\n]+)")
 var re_banner = regexp.MustCompile("banner: ?([^\n]+)")
 var re_convoy = regexp.MustCompile("convoy: ?([^\n]+)")
 var re_retag = regexp.MustCompile("tags: ?([^\n]+)")
+var re_cc = regexp.MustCompile("cc: ?([^\n]+)")
+var re_link = regexp.MustCompile("link: ?([^\n]+)")
 var re_convalidate = regexp.MustCompile("^(https?|tag|data):")
 
 func memetize(honk *Honk) {

@@ -1381,7 +1381,14 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 		if !h.Public {
 			jo["directMessage"] = true
 		}
-		h.Noise = re_retag.ReplaceAllString(h.Noise, "")
+		h.Noise = re_link.ReplaceAllStringFunc(h.Noise, func(x string) string {
+			link := x[5:]
+			if link[0] == ' ' {
+				link = link[1:]
+			}
+			h.Link = link
+			return ""
+		})
 		translate(h)
 		redoimages(h)
 		if h.Precis != "" {
@@ -1467,6 +1474,13 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 			}
 		}
 		atts := activatedonks(h.Donks)
+		if h.Link != "" {
+			jo["type"] = "Page"
+			jl := junk.New()
+			jl["type"] = "Link"
+			jl["href"] = h.Link
+			atts = append(atts, jl)
+		}
 		if len(atts) > 0 {
 			jo["attachment"] = atts
 		}
