@@ -278,7 +278,7 @@ function relinklinks() {
 	while (els.length) {
 		let el = els[0]
 		el.onclick = function() {
-			el.children[0].classList.remove("donk")
+			el.classList.remove("donk")
 			el.onclick = null
 			return false
 		}
