@@ -456,9 +456,14 @@ function scrollprevioushonk() {
 }
 
 function hotkey(e) {
-	if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
-		return
 	if (e.ctrlKey || e.altKey)
+		return
+	if (e.code == "Escape") {
+		var menu = document.getElementById("topmenu")
+		menu.open = false
+		return
+	}
+	if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)
 		return
 
 	switch (e.code) {
@@ -482,10 +487,6 @@ function hotkey(e) {
 		} else {
 			menu.open = false
 		}
-		break
-	case "Escape":
-		var menu = document.getElementById("topmenu")
-		menu.open = false
 		break
 	case "Slash":
 		document.getElementById("topmenu").open = true
