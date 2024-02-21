@@ -354,7 +354,7 @@ func translate(honk *Honk) {
 		honk.Onts = append(honk.Onts, t)
 	}
 	honk.Onts = oneofakind(honk.Onts)
-	honk.Mentions = append(honk.Mentions, bunchofgrapes(strings.Split(honk.SeeAlso, " "))...)
+	honk.Mentions = append(honk.Mentions, bunchofgrapes(oneofakind(strings.Split(honk.SeeAlso, " ")))...)
 }
 
 func redoimages(honk *Honk) {
