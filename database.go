@@ -478,7 +478,6 @@ func donksforhonks(honks []*Honk) {
 			continue
 		}
 		h := hmap[hid]
-		dlog.Printf("meta load %s %s", genus, j)
 		switch genus {
 		case "place":
 			p := new(Place)
