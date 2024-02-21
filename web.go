@@ -781,7 +781,11 @@ func showuser(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if friendorfoe(r.Header.Get("Accept")) {
+	wantjson := false
+	if strings.HasSuffix(r.URL.Path, ".json") {
+		wantjson = true
+	}
+	if friendorfoe(r.Header.Get("Accept")) || wantjson {
 		j, ok := asjonker(name)
 		if ok {
 			w.Header().Set("Content-Type", theonetruename)
@@ -1240,9 +1244,15 @@ func showonehonk(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	xid := serverURL("%s", r.URL.Path)
+	wantjson := false
+	path := r.URL.Path
+	if strings.HasSuffix(path, ".json") {
+		path = path[:len(path)-5]
+		wantjson = true
+	}
+	xid := serverURL("%s", path)
 
-	if friendorfoe(r.Header.Get("Accept")) {
+	if friendorfoe(r.Header.Get("Accept")) || wantjson {
 		j, ok := gimmejonk(xid)
 		if ok {
 			trackback(xid, r)
@@ -2870,7 +2880,9 @@ func serve() {
 	getters.HandleFunc("/robots.txt", nomoroboto)
 	getters.HandleFunc("/rss", showrss)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}", showuser)
+	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}.json", showuser)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/"+honkSep+"/{xid:[\\pL[:digit:]]+}", showonehonk)
+	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/"+honkSep+"/{xid:[\\pL[:digit:]]+}.json", showonehonk)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/rss", showrss)
 	posters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/inbox", inbox)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/outbox", outbox)
