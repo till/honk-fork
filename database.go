@@ -478,6 +478,7 @@ func donksforhonks(honks []*Honk) {
 			continue
 		}
 		h := hmap[hid]
+		dlog.Printf("meta load %s %s", genus, j)
 		switch genus {
 		case "place":
 			p := new(Place)
@@ -507,6 +508,14 @@ func donksforhonks(honks []*Honk) {
 				elog.Printf("error parsing badonks: %s", err)
 				continue
 			}
+		case "seealso":
+			h.SeeAlso = j
+		case "onties":
+			h.Onties = j
+		case "link":
+			h.Link = j
+		case "legalname":
+			h.LegalName = j
 		case "oldrev":
 		default:
 			elog.Printf("unknown meta genus: %s", genus)
@@ -962,6 +971,34 @@ func saveextras(tx *sql.Tx, h *Honk) error {
 		}
 		if err != nil {
 			elog.Printf("error saving mentions: %s", err)
+			return err
+		}
+	}
+	if onties := h.Onties; onties != "" {
+		_, err := tx.Stmt(stmtSaveMeta).Exec(h.ID, "onties", onties)
+		if err != nil {
+			elog.Printf("error saving onties: %s", err)
+			return err
+		}
+	}
+	if legalname := h.LegalName; legalname != "" {
+		_, err := tx.Stmt(stmtSaveMeta).Exec(h.ID, "legalname", legalname)
+		if err != nil {
+			elog.Printf("error saving legalname: %s", err)
+			return err
+		}
+	}
+	if seealso := h.SeeAlso; seealso != "" {
+		_, err := tx.Stmt(stmtSaveMeta).Exec(h.ID, "seealso", seealso)
+		if err != nil {
+			elog.Printf("error saving seealso: %s", err)
+			return err
+		}
+	}
+	if link := h.Link; link != "" {
+		_, err := tx.Stmt(stmtSaveMeta).Exec(h.ID, "link", link)
+		if err != nil {
+			elog.Printf("error saving link: %s", err)
 			return err
 		}
 	}

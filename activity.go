@@ -1381,14 +1381,6 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 		if !h.Public {
 			jo["directMessage"] = true
 		}
-		h.Noise = re_link.ReplaceAllStringFunc(h.Noise, func(x string) string {
-			link := x[5:]
-			if link[0] == ' ' {
-				link = link[1:]
-			}
-			h.Link = link
-			return ""
-		})
 		translate(h)
 		redoimages(h)
 		if h.Precis != "" {
@@ -1484,7 +1476,12 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 		if len(atts) > 0 {
 			jo["attachment"] = atts
 		}
-		jo["summary"] = h.Precis
+		if h.LegalName != "" {
+			jo["name"] = h.LegalName
+		}
+		if h.Precis != "" {
+			jo["summary"] = h.Precis
+		}
 		jo["content"] = h.Noise
 		j["object"] = jo
 	case "bonk":

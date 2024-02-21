@@ -55,6 +55,9 @@ in reply to: <a href="{{ .RID }}" rel=noreferrer>{{ .RID }}</a>
 <summary class="noise">{{ .HTPrecis }}<p></summary>
 <p>{{ .HTPrecis }}
 <p class="content">{{ .HTML }}
+{{ if .Link }}
+<p><a href="{{ .Link }}">{{ or .LegalName .Link }}</a>
+{{ end }}
 {{ with .Time }}
 <p>Time: {{ .StartTime.Local.Format "03:04PM MST Mon Jan 02"}}
 {{ if .Duration }}<br>Duration: {{ .Duration }}{{ end }}</p>

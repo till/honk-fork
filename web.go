@@ -1633,6 +1633,10 @@ func edithonkpage(w http.ResponseWriter, r *http.Request) {
 			templinfo["Duration"] = tm.Duration
 		}
 	}
+	templinfo["Onties"] = honk.Onties
+	templinfo["SeeAlso"] = honk.SeeAlso
+	templinfo["Link"] = honk.Link
+	templinfo["LegalName"] = honk.LegalName
 	templinfo["ServerMessage"] = "honk edit"
 	templinfo["IsPreview"] = true
 	templinfo["UpdateXID"] = honk.XID
@@ -1831,6 +1835,10 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 			Format:   format,
 		}
 	}
+	honk.SeeAlso = strings.TrimSpace(r.FormValue("seealso"))
+	honk.Onties = strings.TrimSpace(r.FormValue("onties"))
+	honk.Link = strings.TrimSpace(r.FormValue("link"))
+	honk.LegalName = strings.TrimSpace(r.FormValue("legalname"))
 
 	var convoy string
 	noise = strings.Replace(noise, "\r", "", -1)
@@ -1848,7 +1856,6 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 	honk.Noise = noise
 	precipitate(honk)
 	noise = honk.Noise
-	recategorize(honk)
 	translate(honk)
 
 	if rid != "" {
@@ -1882,9 +1889,10 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 	} else {
 		honk.Audience = append(honk.Audience, grapevine(honk.Mentions)...)
 	}
+	honk.Convoy = convoy
 
-	if convoy == "" {
-		convoy = "data:,electrichonkytonk-" + xfiltrate()
+	if honk.Convoy == "" {
+		honk.Convoy = "data:,electrichonkytonk-" + xfiltrate()
 	}
 	butnottooloud(honk.Audience)
 	honk.Audience = oneofakind(honk.Audience)
@@ -1894,7 +1902,6 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 		return nil
 	}
 	honk.Public = loudandproud(honk.Audience)
-	honk.Convoy = convoy
 
 	donkxid := strings.Join(r.Form["donkxid"], ",")
 	if donkxid == "" {

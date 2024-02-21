@@ -81,9 +81,7 @@ func reverbolate(userid int64, honks []*Honk) {
 			local = true
 		}
 		if local && h.What != "bonked" {
-			h.Noise = re_retag.ReplaceAllString(h.Noise, "")
 			h.Noise = re_memes.ReplaceAllString(h.Noise, "")
-			h.Noise = re_cc.ReplaceAllString(h.Noise, "")
 		}
 		h.Username, h.Handle = handles(h.Honker)
 		if !local {
@@ -347,8 +345,16 @@ func translate(honk *Honk) {
 	noise = strings.TrimSpace(noise)
 	noise = marker.Mark(noise)
 	honk.Noise = noise
-	honk.Onts = oneofakind(append(honk.Onts, marker.HashTags...))
+	honk.Onts = append(honk.Onts, marker.HashTags...)
 	honk.Mentions = bunchofgrapes(marker.Mentions)
+	for _, t := range oneofakind(strings.Split(honk.Onties, " ")) {
+		if t[0] != '#' {
+			t = "#" + t
+		}
+		honk.Onts = append(honk.Onts, t)
+	}
+	honk.Onts = oneofakind(honk.Onts)
+	honk.Mentions = append(honk.Mentions, bunchofgrapes(strings.Split(honk.SeeAlso, " "))...)
 }
 
 func redoimages(honk *Honk) {
@@ -372,8 +378,6 @@ func redoimages(honk *Honk) {
 	honk.Donks = honk.Donks[:j]
 
 	honk.Noise = re_memes.ReplaceAllString(honk.Noise, "")
-	honk.Noise = re_retag.ReplaceAllString(honk.Noise, "")
-	honk.Noise = re_cc.ReplaceAllString(honk.Noise, "")
 	honk.Noise = strings.Replace(honk.Noise, "<a href=", "<a class=\"mention u-url\" href=", -1)
 }
 
@@ -465,9 +469,6 @@ var re_memes = regexp.MustCompile("meme: ?([^\n]+)")
 var re_avatar = regexp.MustCompile("avatar: ?([^\n]+)")
 var re_banner = regexp.MustCompile("banner: ?([^\n]+)")
 var re_convoy = regexp.MustCompile("convoy: ?([^\n]+)")
-var re_retag = regexp.MustCompile("tags: ?([^\n]+)")
-var re_cc = regexp.MustCompile("cc: ?([^\n]+)")
-var re_link = regexp.MustCompile("link: ?([^\n]+)")
 var re_convalidate = regexp.MustCompile("^(https?|tag|data):")
 
 func memetize(honk *Honk) {
@@ -503,24 +504,6 @@ func memetize(honk *Honk) {
 		return ""
 	}
 	honk.Noise = re_memes.ReplaceAllStringFunc(honk.Noise, repl)
-}
-
-func recategorize(honk *Honk) {
-	repl := func(x string) string {
-		x = x[5:]
-		for _, t := range strings.Split(x, " ") {
-			if t == "" {
-				continue
-			}
-			if t[0] != '#' {
-				t = "#" + t
-			}
-			dlog.Printf("hashtag: %s", t)
-			honk.Onts = append(honk.Onts, t)
-		}
-		return ""
-	}
-	honk.Noise = re_retag.ReplaceAllStringFunc(honk.Noise, repl)
 }
 
 var re_quickmention = regexp.MustCompile("(^|[ \n])@[[:alnum:]_]+([ \n:;.,']|$)")

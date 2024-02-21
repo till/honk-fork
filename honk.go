@@ -63,39 +63,42 @@ const serverUID int64 = -2
 const readyLuserOne int64 = 1
 
 type Honk struct {
-	ID       int64
-	UserID   int64
-	Username string
-	What     string
-	Honker   string
-	Handle   string
-	Handles  string
-	Oonker   string
-	Oondle   string
-	XID      string
-	RID      string
-	Date     time.Time
-	URL      string
-	Noise    string
-	Precis   string
-	Format   string
-	Convoy   string
-	Audience []string
-	Public   bool
-	Whofore  int64
-	Replies  []*Honk
-	Flags    int64
-	HTPrecis template.HTML
-	HTML     template.HTML
-	Style    string
-	Open     string
-	Donks    []*Donk
-	Onts     []string
-	Place    *Place
-	Time     *Time
-	Link     string
-	Mentions []Mention
-	Badonks  []Badonk
+	ID        int64
+	UserID    int64
+	Username  string
+	What      string
+	Honker    string
+	Handle    string
+	Handles   string
+	Oonker    string
+	Oondle    string
+	XID       string
+	RID       string
+	Date      time.Time
+	URL       string
+	Noise     string
+	Precis    string
+	Format    string
+	Convoy    string
+	Audience  []string
+	Public    bool
+	Whofore   int64
+	Replies   []*Honk
+	Flags     int64
+	HTPrecis  template.HTML
+	HTML      template.HTML
+	Style     string
+	Open      string
+	Donks     []*Donk
+	Onts      []string
+	Place     *Place
+	Time      *Time
+	Link      string
+	Mentions  []Mention
+	Badonks   []Badonk
+	SeeAlso   string
+	Onties    string
+	LegalName string
 }
 
 type Badonk struct {
