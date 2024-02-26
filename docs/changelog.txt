@@ -1,5 +1,13 @@
 changelog
 
+### next
+
++ Easier to inline attached images.
+
++ Optional .json urls for activities.
+
++ cc, link, name, and tags fields for advanced metadata.
+
 ### 1.2.3 Regarded Reflection
 
 + Don't serve attachments to clients expecting activities.
