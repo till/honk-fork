@@ -24,7 +24,9 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -148,7 +150,7 @@ func reverbolate(userid int64, honks []*Honk) {
 		zap := make(map[string]bool)
 		{
 			var htf htfilter.Filter
-			htf.Imager = replaceimgsand(zap, false)
+			htf.Imager = replaceimgsand(zap, false, h)
 			htf.SpanClasses = allowedclasses
 			htf.BaseURL, _ = url.Parse(h.XID)
 			emuxifier := func(e string) string {
@@ -212,7 +214,7 @@ func reverbolate(userid int64, honks []*Honk) {
 	}
 }
 
-func replaceimgsand(zap map[string]bool, absolute bool) func(node *html.Node) string {
+func replaceimgsand(zap map[string]bool, absolute bool, honk *Honk) func(node *html.Node) string {
 	return func(node *html.Node) string {
 		src := htfilter.GetAttr(node, "src")
 		alt := htfilter.GetAttr(node, "alt")
@@ -220,7 +222,14 @@ func replaceimgsand(zap map[string]bool, absolute bool) func(node *html.Node) st
 		if htfilter.HasClass(node, "Emoji") && alt != "" {
 			return alt
 		}
-		d := finddonk(src)
+		base := path.Base(src)
+		didx, _ := strconv.Atoi(base)
+		var d *Donk
+		if strings.HasPrefix(src, serverPrefix) && didx > 0 && didx <= len(honk.Donks) {
+			d = honk.Donks[didx-1]
+		} else {
+			d = finddonk(src)
+		}
 		if d != nil {
 			zap[d.XID] = true
 			base := ""
@@ -296,6 +305,12 @@ func inlineimgsfor(honk *Honk) func(node *html.Node) string {
 	return func(node *html.Node) string {
 		src := htfilter.GetAttr(node, "src")
 		alt := htfilter.GetAttr(node, "alt")
+		base := path.Base(src)
+		didx, _ := strconv.Atoi(base)
+		if strings.HasPrefix(src, serverPrefix) && didx > 0 && didx <= len(honk.Donks) {
+			dlog.Printf("skipping inline image %s", src)
+			return ""
+		}
 		d := savedonk(src, "image", alt, "image", true)
 		if d != nil {
 			honk.Donks = append(honk.Donks, d)
@@ -361,8 +376,9 @@ func redoimages(honk *Honk) {
 	zap := make(map[string]bool)
 	{
 		var htf htfilter.Filter
-		htf.Imager = replaceimgsand(zap, true)
+		htf.Imager = replaceimgsand(zap, true, honk)
 		htf.SpanClasses = allowedclasses
+		htf.BaseURL, _ = url.Parse(honk.XID)
 		p, _ := htf.String(honk.Precis)
 		n, _ := htf.String(honk.Noise)
 		honk.Precis = string(p)

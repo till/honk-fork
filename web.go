@@ -1624,12 +1624,16 @@ func edithonkpage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "no editing that please", http.StatusInternalServerError)
 		return
 	}
-
 	noise := honk.Noise
+	var savedfiles []string
 
 	honks := []*Honk{honk}
 	donksforhonks(honks)
+	for _, d := range honk.Donks {
+		savedfiles = append(savedfiles, fmt.Sprintf("%s:%d", d.XID, d.FileID))
+	}
 	reverbolate(u.UserID, honks)
+
 	templinfo := getInfo(r)
 	templinfo["HonkCSRF"] = login.GetCSRF("honkhonk", r)
 	templinfo["Honks"] = honks
@@ -1650,11 +1654,7 @@ func edithonkpage(w http.ResponseWriter, r *http.Request) {
 	templinfo["ServerMessage"] = "honk edit"
 	templinfo["IsPreview"] = true
 	templinfo["UpdateXID"] = honk.XID
-	if len(honk.Donks) > 0 {
-		var savedfiles []string
-		for _, d := range honk.Donks {
-			savedfiles = append(savedfiles, fmt.Sprintf("%s:%d", d.XID, d.FileID))
-		}
+	if len(savedfiles) > 0 {
 		templinfo["SavedFile"] = strings.Join(savedfiles, ",")
 	}
 	err := readviews.Execute(w, "honkpage.html", templinfo)
