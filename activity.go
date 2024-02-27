@@ -269,10 +269,12 @@ func fetchsome(url string) ([]byte, error) {
 		return nil, fmt.Errorf("http get not 200: %d %s", resp.StatusCode, url)
 	}
 	var buf bytes.Buffer
-	limiter := io.LimitReader(resp.Body, 14*1024*1024)
+	limiter := io.LimitReader(resp.Body, maxFetchSize)
 	io.Copy(&buf, limiter)
 	return buf.Bytes(), nil
 }
+
+const maxFetchSize = 14 * 1024 * 1024
 
 func savedonk(url string, name, desc, media string, localize bool) *Donk {
 	if url == "" {
@@ -295,7 +297,7 @@ func savedonk(url string, name, desc, media string, localize bool) *Donk {
 		}
 		data = ii.([]byte)
 
-		if len(data) == 10*1024*1024 {
+		if len(data) == maxFetchSize {
 			ilog.Printf("truncation likely")
 		}
 		if strings.HasPrefix(media, "image") {
