@@ -25,6 +25,10 @@ func syndicate(user *WhatAbout, url string) {
 	for _, item := range rss.Items {
 		var final string
 		dlog.Printf("link: %s", item.Link)
+		if x := getxonk(user.ID, item.Link); x != nil {
+			dlog.Printf("already have it")
+			continue
+		}
 		j, err := GetJunkTimeout(user.ID, item.Link, fastTimeout*time.Second, &final)
 		if err != nil {
 			dlog.Printf("unable to fetch link: %s", err)
