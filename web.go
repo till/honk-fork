@@ -2209,7 +2209,7 @@ func submithonker(w http.ResponseWriter, r *http.Request) *Honker {
 	}
 
 	var err error
-	honkerid, err = savehonker(user, url, name, flavor, combos, mj)
+	honkerid, flavor, err = savehonker(user, url, name, flavor, combos, mj)
 	if err != nil {
 		http.Error(w, "had some trouble with that: "+err.Error(), http.StatusInternalServerError)
 		return nil
@@ -2832,6 +2832,7 @@ func serve() {
 	go enditall()
 	go redeliverator()
 	go tracker()
+	go syndicator()
 	go bgmonitor()
 	go qotd()
 	loadLingo()

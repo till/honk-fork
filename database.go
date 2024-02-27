@@ -1068,7 +1068,7 @@ func savexonker(what, value, flav, when string) {
 	stmtSaveXonker.Exec(what, value, flav, when)
 }
 
-func savehonker(user *WhatAbout, url, name, flavor, combos, mj string) (int64, error) {
+func savehonker(user *WhatAbout, url, name, flavor, combos, mj string) (int64, string, error) {
 	var owner string
 	if url[0] == '#' {
 		flavor = "peep"
@@ -1076,11 +1076,18 @@ func savehonker(user *WhatAbout, url, name, flavor, combos, mj string) (int64, e
 			name = url[1:]
 		}
 		owner = url
+	} else if strings.HasSuffix(url, ".rss") {
+		flavor = "peep"
+		if name == "" {
+			name = url[strings.LastIndexByte(url, '/')+1:]
+		}
+		owner = url
+
 	} else {
 		info, err := investigate(url)
 		if err != nil {
 			ilog.Printf("failed to investigate honker: %s", err)
-			return 0, err
+			return 0, "", err
 		}
 		url = info.XID
 		if name == "" {
@@ -1099,16 +1106,16 @@ func savehonker(user *WhatAbout, url, name, flavor, combos, mj string) (int64, e
 		} else {
 			err = fmt.Errorf("it seems you are already subscribed to them")
 		}
-		return 0, err
+		return 0, "", err
 	}
 
 	res, err := stmtSaveHonker.Exec(user.ID, name, url, flavor, combos, owner, mj)
 	if err != nil {
 		elog.Print(err)
-		return 0, err
+		return 0, "", err
 	}
 	honkerid, _ := res.LastInsertId()
-	return honkerid, nil
+	return honkerid, flavor, nil
 }
 
 func cleanupdb(arg string) {

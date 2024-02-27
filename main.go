@@ -51,6 +51,8 @@ func serverURL(u string, args ...interface{}) string {
 }
 
 func ElaborateUnitTests() {
+	user, _ := butwhatabout("test")
+	syndicate(user, "https://mastodon.social/tags/mastoadmin.rss")
 }
 
 func unplugserver(hostname string) {
@@ -208,11 +210,13 @@ func main() {
 		}
 		var meta HonkerMeta
 		mj, _ := jsonify(&meta)
-		honkerid, err := savehonker(user, args[2], "", "presub", "", mj)
+		honkerid, flavor, err := savehonker(user, args[2], "", "presub", "", mj)
 		if err != nil {
 			errx("had some trouble with that: %s", err)
 		}
-		followyou(user, honkerid, true)
+		if flavor == "presub" {
+			followyou(user, honkerid, true)
+		}
 	case "unfollow":
 		if len(args) < 3 {
 			errx("usage: honk unfollow username url")
