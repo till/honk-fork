@@ -597,17 +597,26 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				tryit = true
 			}
 			if tryit {
+				dlog.Printf("trying to get a quote from %s", m)
 				var prefix string
 				if m == qurl {
 					prefix += fmt.Sprintf("<p><a href=\"%s\">%s</a>", m, m)
 				}
 				var final string
 				if x := getxonk(user.ID, m); x != nil {
+					dlog.Printf("already had it")
 					content = fmt.Sprintf("%s%s<blockquote>%s</blockquote>", content, prefix, x.Noise)
-				} else if j, err := GetJunkTimeout(user.ID, m, fastTimeout*time.Second, &final); err == nil {
+				} else {
+					j, err := GetJunkTimeout(user.ID, m, fastTimeout*time.Second, &final)
+					if err != nil {
+						dlog.Printf("unable to fetch quote: %s", err)
+						continue
+					}
 					q, ok := j.GetString("content")
 					if ok {
 						content = fmt.Sprintf("%s%s<blockquote>%s</blockquote>", content, prefix, q)
+					} else {
+						dlog.Printf("apparently no content")
 					}
 					prevdepth := depth
 					depth = maxdepth
