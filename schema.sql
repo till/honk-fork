@@ -12,6 +12,7 @@ create table hfcs (hfcsid integer primary key, userid integer, json text);
 create table tracks (xid text, fetches text);
 
 create index idx_honksxid on honks(xid);
+create index idx_honksurl on honks(url);
 create index idx_honksconvoy on honks(convoy);
 create index idx_honkshonker on honks(honker);
 create index idx_honksoonker on honks(oonker);

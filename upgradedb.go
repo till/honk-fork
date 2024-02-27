@@ -23,7 +23,7 @@ import (
 	"humungus.tedunangst.com/r/webs/htfilter"
 )
 
-var myVersion = 48 // chat keys
+var myVersion = 49 // index honks url
 
 type dbexecer interface {
 	Exec(query string, args ...interface{}) (sql.Result, error)
@@ -210,6 +210,10 @@ func upgradedb() {
 		setV(48)
 		fallthrough
 	case 48:
+		try("create index idx_honksurl on honks(url)")
+		setV(49)
+		fallthrough
+	case 49:
 		try("analyze")
 		closedatabases()
 

@@ -179,7 +179,7 @@ func allusers() []login.UserInfo {
 }
 
 func getxonk(userid int64, xid string) *Honk {
-	row := stmtOneXonk.QueryRow(userid, xid)
+	row := stmtOneXonk.QueryRow(userid, xid, xid)
 	return scanhonk(row)
 }
 
@@ -1243,7 +1243,7 @@ func prepareStatements(db *sql.DB) {
 	limit := " order by honks.honkid desc limit 250"
 	smalllimit := " order by honks.honkid desc limit ?"
 	butnotthose := " and convoy not in (select name from zonkers where userid = ? and wherefore = 'zonvoy' order by zonkerid desc limit 100)"
-	stmtOneXonk = preparetodie(db, selecthonks+"where honks.userid = ? and xid = ?")
+	stmtOneXonk = preparetodie(db, selecthonks+"where honks.userid = ? and (xid = ? or url = ?)")
 	stmtAnyXonk = preparetodie(db, selecthonks+"where xid = ? and what <> 'bonk' order by honks.honkid asc")
 	stmtOneBonk = preparetodie(db, selecthonks+"where honks.userid = ? and xid = ? and what = 'bonk' and whofore = 2")
 	stmtPublicHonks = preparetodie(db, selecthonks+"where whofore = 2 and dt > ?"+smalllimit)
