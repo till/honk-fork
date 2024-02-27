@@ -1169,7 +1169,9 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		xonk.What = what
 		xonk.RID = rid
 		xonk.Date, _ = time.Parse(time.RFC3339, dt)
-		xonk.URL = url
+		if originate(url) == originate(xonk.XID) {
+			xonk.URL = url
+		}
 		xonk.Format = "html"
 		xonk.Convoy = convoy
 		xonk.Mentions = mentions

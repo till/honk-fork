@@ -179,6 +179,9 @@ func allusers() []login.UserInfo {
 }
 
 func getxonk(userid int64, xid string) *Honk {
+	if xid == "" {
+		return nil
+	}
 	row := stmtOneXonk.QueryRow(userid, xid, xid)
 	return scanhonk(row)
 }
