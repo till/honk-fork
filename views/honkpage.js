@@ -353,6 +353,7 @@ function relinklinks() {
 function showhonkform(elem, rid, hname) {
 	var form = lehonkform
 	form.style = "display: block"
+	form.reset()
 	if (elem) {
 		form.remove()
 		elem.parentElement.parentElement.parentElement.insertAdjacentElement('beforebegin', form)
@@ -361,6 +362,8 @@ function showhonkform(elem, rid, hname) {
 		elem = document.getElementById("honkformhost")
 		elem.insertAdjacentElement('afterend', form)
 	}
+	var donker = document.getElementById("donker")
+	donker.children[1].textContent = ""
 	var ridinput = document.getElementById("ridinput")
 	var honknoise = document.getElementById("honknoise")
 	if (rid) {
@@ -376,6 +379,8 @@ function showhonkform(elem, rid, hname) {
 	}
 	var updateinput = document.getElementById("updatexidinput")
 	updateinput.value = ""
+	var savedfile = document.getElementById("saveddonkxid")
+	savedfile.value = ""
 	honknoise.focus()
 	return false
 }
