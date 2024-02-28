@@ -938,7 +938,7 @@ func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-	var onts []Ont
+	var onts, pops []Ont
 	for rows.Next() {
 		var o Ont
 		err := rows.Scan(&o.Name, &o.Count)
@@ -951,14 +951,24 @@ func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 		}
 		o.Name = o.Name[1:]
 		onts = append(onts, o)
+		if o.Count > 1 {
+			pops = append(pops, o)
+		}
 	}
 	sort.Slice(onts, func(i, j int) bool {
 		return onts[i].Name < onts[j].Name
 	})
+	sort.Slice(pops, func(i, j int) bool {
+		return pops[i].Count > pops[j].Count
+	})
+	if len(pops) > 40 {
+		pops = pops[:40]
+	}
 	if u == nil && !develMode {
 		w.Header().Set("Cache-Control", "max-age=300")
 	}
 	templinfo := getInfo(r)
+	templinfo["Pops"] = pops
 	templinfo["Onts"] = onts
 	templinfo["FirstRune"] = func(s string) rune { r, _ := utf8.DecodeRuneInString(s); return r }
 	err = readviews.Execute(w, "onts.html", templinfo)

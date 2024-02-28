@@ -3,8 +3,12 @@
 <div class="info">
 <p>ontologies of interest
 {{ $firstrune := .FirstRune }}
-{{ $letter := 0 }}
 <ul>
+<li><p>
+{{ range .Pops }}
+<span class="wsnowrap"><a href="/o/{{ .Name }}">#{{ .Name }}</a> ({{ .Count }})</span>
+{{ end }}
+{{ $letter := 0 }}
 {{ range .Onts }}
 {{ if not (eq $letter (call $firstrune .Name)) }}
 {{ $letter = (call $firstrune .Name) }}
