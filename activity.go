@@ -560,6 +560,20 @@ func firstofmany(obj junk.Junk, key string) string {
 	return ""
 }
 
+func grabhonk(user *WhatAbout, xid string) {
+	if x := getxonk(user.ID, xid); x != nil {
+		dlog.Printf("already have it: %s", xid)
+		return
+	}
+	var final string
+	j, err := GetJunkTimeout(user.ID, xid, fastTimeout*time.Second, &final)
+	if err != nil {
+		dlog.Printf("unable to fetch xid: %s", err)
+		return
+	}
+	xonksaver(user, j, originate(final))
+}
+
 var re_mast0link = regexp.MustCompile(`https://[[:alnum:].]+/users/[[:alnum:]]+/statuses/[[:digit:]]+`)
 var re_masto1ink = regexp.MustCompile(`https://([[:alnum:].]+)/@([[:alnum:]]+)(@[[:alnum:].]+)?/([[:digit:]]+)`)
 var re_misslink = regexp.MustCompile(`https://[[:alnum:].]+/notes/[[:alnum:]]+`)
