@@ -61,10 +61,12 @@ func sayitagain(doover Doover) {
 	}
 }
 
+const nearlyDead = 8
+
 func lethaldose(err error) int64 {
 	str := err.Error()
 	if strings.Contains(str, "no such host") {
-		return 8
+		return nearlyDead
 	}
 	return 0
 }
@@ -140,6 +142,9 @@ func deliveration(doover Doover) {
 		box, ok := boxofboxes.Get(rcpt)
 		if !ok {
 			ilog.Printf("failed getting inbox for %s", rcpt)
+			if doover.Tries < nearlyDead {
+				doover.Tries = nearlyDead
+			}
 			sayitagain(doover)
 			return
 		}
