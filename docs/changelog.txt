@@ -1,12 +1,18 @@
 changelog
 
-### next
+### 1.3.0 Big Bonsai
+
++ Some performance tuning.
+
++ Follow .rss feeds for hashtags.
 
 + Easier to inline attached images.
 
 + Optional .json urls for activities.
 
 + cc, link, name, and tags fields for advanced metadata.
+
++ <big> tag supported in html.
 
 ### 1.2.3 Regarded Reflection
 
