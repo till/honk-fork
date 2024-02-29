@@ -447,7 +447,15 @@ func inbox(w http.ResponseWriter, r *http.Request) {
 	if origin == "" {
 		ilog.Printf("keyname actor mismatch: %s <> %s", keyname, who)
 		if what == "Create" {
-			if xid, ok := j.GetString("object"); ok {
+			dlog.Printf("checking to get it: %v", j["object"])
+			var xid string
+			obj, ok := j.GetMap("object")
+			if ok {
+				xid, _ = obj.GetString("id")
+			} else {
+				xid, _ = j.GetString("object")
+			}
+			if xid != "" {
 				dlog.Printf("getting forwarded create from %s: %s", keyname, xid)
 				grabhonk(user, xid)
 			}
