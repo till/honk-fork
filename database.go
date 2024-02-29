@@ -254,17 +254,24 @@ func gethonksforme(userid int64, wanted int64) []*Honk {
 	return getsomehonks(rows, err)
 }
 func gethonksfromlongago(userid int64, wanted int64) []*Honk {
+	var params []interface{}
+	var wheres []string
+	params = append(params, wanted)
+	params = append(params, userid)
 	now := time.Now()
-	var honks []*Honk
-	for i := 1; i <= 4; i++ {
+	for i := 1; i <= 5; i++ {
 		dt := time.Date(now.Year()-i, now.Month(), now.Day(), now.Hour(), now.Minute(),
 			now.Second(), 0, now.Location())
 		dt1 := dt.Add(-36 * time.Hour).UTC().Format(dbtimeformat)
 		dt2 := dt.Add(12 * time.Hour).UTC().Format(dbtimeformat)
-		rows, err := stmtHonksFromLongAgo.Query(wanted, userid, dt1, dt2, userid)
-		honks = append(honks, getsomehonks(rows, err)...)
+		wheres = append(wheres, "(dt > ? and dt < ?)")
+		params = append(params, dt1, dt2)
 	}
-	return honks
+	params = append(params, userid)
+	sql := strings.ReplaceAll(sqlHonksFromLongAgo, "WHERECLAUSE", strings.Join(wheres, " or "))
+	db := opendatabase()
+	rows, err := db.Query(sql, params...)
+	return getsomehonks(rows, err)
 }
 func getsavedhonks(userid int64, wanted int64) []*Honk {
 	rows, err := stmtHonksISaved.Query(wanted, userid)
@@ -1193,7 +1200,7 @@ var stmtHonkers, stmtDubbers, stmtNamedDubbers, stmtSaveHonker, stmtUpdateFlavor
 var stmtDeleteHonker *sql.Stmt
 var stmtAnyXonk, stmtOneXonk, stmtPublicHonks, stmtUserHonks, stmtHonksByCombo, stmtHonksByConvoy *sql.Stmt
 var stmtHonksByOntology, stmtHonksForUser, stmtHonksForMe, stmtSaveDub, stmtHonksByXonker *sql.Stmt
-var stmtHonksFromLongAgo *sql.Stmt
+var sqlHonksFromLongAgo string
 var stmtHonksByHonker, stmtSaveHonk, stmtUserByName, stmtUserByNumber *sql.Stmt
 var stmtEventHonks, stmtOneBonk, stmtFindZonk, stmtFindXonk, stmtSaveDonk *sql.Stmt
 var stmtFindFile, stmtFindFileId, stmtGetFileData, stmtSaveFileData, stmtSaveFile *sql.Stmt
@@ -1256,7 +1263,7 @@ func prepareStatements(db *sql.DB) {
 	stmtHonksForUser = preparetodie(db, selecthonks+"where honks.honkid > ? and honks.userid = ? and dt > ?"+myhonkers+butnotthose+limit)
 	stmtHonksForUserFirstClass = preparetodie(db, selecthonks+"where honks.honkid > ? and honks.userid = ? and dt > ? and (rid = '' or what = 'bonk')"+myhonkers+butnotthose+limit)
 	stmtHonksForMe = preparetodie(db, selecthonks+"where honks.honkid > ? and honks.userid = ? and dt > ? and whofore = 1"+butnotthose+smalllimit)
-	stmtHonksFromLongAgo = preparetodie(db, selecthonks+"where honks.honkid > ? and honks.userid = ? and dt > ? and dt < ? and (whofore = 2 or flags & 4)"+butnotthose+limit)
+	sqlHonksFromLongAgo = selecthonks + "where honks.honkid > ? and honks.userid = ? and (WHERECLAUSE) and (whofore = 2 or flags & 4)" + butnotthose + limit
 	stmtHonksISaved = preparetodie(db, selecthonks+"where honks.honkid > ? and honks.userid = ? and flags & 4 order by honks.honkid desc")
 	stmtHonksByHonker = preparetodie(db, selecthonks+"join honkers on (honkers.xid = honks.honker or honkers.xid = honks.oonker) where honks.honkid > ? and honks.userid = ? and honkers.name = ?"+butnotthose+limit)
 	stmtHonksByXonker = preparetodie(db, selecthonks+" where honks.honkid > ? and honks.userid = ? and (honker = ? or oonker = ?)"+butnotthose+limit)
