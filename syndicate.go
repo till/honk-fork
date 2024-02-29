@@ -30,7 +30,7 @@ func syndicate(user *WhatAbout, url string) {
 
 func syndicator() {
 	for {
-		dur := 12 * time.Hour
+		dur := 8 * time.Hour
 		dur += time.Duration(notrand.Int63n(int64(dur / 4)))
 		time.Sleep(dur)
 		users := allusers()
