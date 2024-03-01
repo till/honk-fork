@@ -112,15 +112,15 @@ func PostMsg(keyname string, key httpsig.PrivateKey, url string, msg []byte) err
 	return nil
 }
 
-func GetJunk(userid int64, url string) (junk.Junk, error) {
+func GetJunk(userid UserID, url string) (junk.Junk, error) {
 	return GetJunkTimeout(userid, url, slowTimeout*time.Second, nil)
 }
 
-func GetJunkFast(userid int64, url string) (junk.Junk, error) {
+func GetJunkFast(userid UserID, url string) (junk.Junk, error) {
 	return GetJunkTimeout(userid, url, fastTimeout*time.Second, nil)
 }
 
-func GetJunkHardMode(userid int64, url string) (junk.Junk, error) {
+func GetJunkHardMode(userid UserID, url string) (junk.Junk, error) {
 	j, err := GetJunk(userid, url)
 	if err != nil {
 		emsg := err.Error()
@@ -141,7 +141,7 @@ func GetJunkHardMode(userid int64, url string) (junk.Junk, error) {
 
 var flightdeck = gate.NewSerializer()
 
-func GetJunkTimeout(userid int64, url string, timeout time.Duration, final *string) (junk.Junk, error) {
+func GetJunkTimeout(userid UserID, url string, timeout time.Duration, final *string) (junk.Junk, error) {
 	if rejectorigin(userid, url, false) {
 		return nil, fmt.Errorf("rejected origin: %s", url)
 	}
@@ -333,7 +333,7 @@ saveit:
 	return donk
 }
 
-func iszonked(userid int64, xid string) bool {
+func iszonked(userid UserID, xid string) bool {
 	var id int64
 	row := stmtFindZonk.QueryRow(userid, xid)
 	err := row.Scan(&id)
@@ -385,7 +385,7 @@ func needxonkidX(user *WhatAbout, xid string, isannounce bool) bool {
 	return true
 }
 
-func eradicatexonk(userid int64, xid string) {
+func eradicatexonk(userid UserID, xid string) {
 	xonk := getxonk(userid, xid)
 	if xonk != nil {
 		deletehonk(xonk.ID)

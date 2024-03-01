@@ -83,7 +83,7 @@ var somenamedusers = gencache.New(gencache.Options[string, *WhatAbout]{Fill: fun
 	return user, true
 }})
 
-var somenumberedusers = gencache.New(gencache.Options[int64, *WhatAbout]{Fill: func(userid int64) (*WhatAbout, bool) {
+var somenumberedusers = gencache.New(gencache.Options[UserID, *WhatAbout]{Fill: func(userid UserID) (*WhatAbout, bool) {
 	row := stmtUserByNumber.QueryRow(userid)
 	user, err := userfromrow(row)
 	if err != nil {
@@ -110,9 +110,9 @@ func butwhatabout(name string) (*WhatAbout, error) {
 	return user, nil
 }
 
-var honkerinvalidator gencache.Invalidator[int64]
+var honkerinvalidator gencache.Invalidator[UserID]
 
-func gethonkers(userid int64) []*Honker {
+func gethonkers(userid UserID) []*Honker {
 	rows, err := stmtHonkers.Query(userid)
 	if err != nil {
 		elog.Printf("error querying honkers: %s", err)
@@ -137,12 +137,12 @@ func gethonkers(userid int64) []*Honker {
 	return honkers
 }
 
-func getdubs(userid int64) []*Honker {
+func getdubs(userid UserID) []*Honker {
 	rows, err := stmtDubbers.Query(userid)
 	return dubsfromrows(rows, err)
 }
 
-func getnameddubs(userid int64, name string) []*Honker {
+func getnameddubs(userid UserID, name string) []*Honker {
 	rows, err := stmtNamedDubbers.Query(userid, name)
 	return dubsfromrows(rows, err)
 }
@@ -178,7 +178,7 @@ func allusers() []login.UserInfo {
 	return users
 }
 
-func getxonk(userid int64, xid string) *Honk {
+func getxonk(userid UserID, xid string) *Honk {
 	if xid == "" {
 		return nil
 	}
@@ -186,7 +186,7 @@ func getxonk(userid int64, xid string) *Honk {
 	return scanhonk(row)
 }
 
-func getbonk(userid int64, xid string) *Honk {
+func getbonk(userid UserID, xid string) *Honk {
 	row := stmtOneBonk.QueryRow(userid, xid)
 	return scanhonk(row)
 }
@@ -196,7 +196,7 @@ func getpublichonks() []*Honk {
 	rows, err := stmtPublicHonks.Query(dt, 100)
 	return getsomehonks(rows, err)
 }
-func geteventhonks(userid int64) []*Honk {
+func geteventhonks(userid UserID) []*Honk {
 	rows, err := stmtEventHonks.Query(userid, 25)
 	honks := getsomehonks(rows, err)
 	sort.Slice(honks, func(i, j int) bool {
@@ -237,23 +237,23 @@ func gethonksbyuser(name string, includeprivate bool, wanted int64) []*Honk {
 	rows, err := stmtUserHonks.Query(wanted, whofore, name, dt, limit)
 	return getsomehonks(rows, err)
 }
-func gethonksforuser(userid int64, wanted int64) []*Honk {
+func gethonksforuser(userid UserID, wanted int64) []*Honk {
 	dt := time.Now().Add(-honkwindow).UTC().Format(dbtimeformat)
 	rows, err := stmtHonksForUser.Query(wanted, userid, dt, userid, userid)
 	return getsomehonks(rows, err)
 }
-func gethonksforuserfirstclass(userid int64, wanted int64) []*Honk {
+func gethonksforuserfirstclass(userid UserID, wanted int64) []*Honk {
 	dt := time.Now().Add(-honkwindow).UTC().Format(dbtimeformat)
 	rows, err := stmtHonksForUserFirstClass.Query(wanted, userid, dt, userid, userid)
 	return getsomehonks(rows, err)
 }
 
-func gethonksforme(userid int64, wanted int64) []*Honk {
+func gethonksforme(userid UserID, wanted int64) []*Honk {
 	dt := time.Now().Add(-honkwindow).UTC().Format(dbtimeformat)
 	rows, err := stmtHonksForMe.Query(wanted, userid, dt, userid, 250)
 	return getsomehonks(rows, err)
 }
-func gethonksfromlongago(userid int64, wanted int64) []*Honk {
+func gethonksfromlongago(userid UserID, wanted int64) []*Honk {
 	var params []interface{}
 	var wheres []string
 	params = append(params, wanted)
@@ -273,29 +273,29 @@ func gethonksfromlongago(userid int64, wanted int64) []*Honk {
 	rows, err := db.Query(sql, params...)
 	return getsomehonks(rows, err)
 }
-func getsavedhonks(userid int64, wanted int64) []*Honk {
+func getsavedhonks(userid UserID, wanted int64) []*Honk {
 	rows, err := stmtHonksISaved.Query(wanted, userid)
 	return getsomehonks(rows, err)
 }
-func gethonksbyhonker(userid int64, honker string, wanted int64) []*Honk {
+func gethonksbyhonker(userid UserID, honker string, wanted int64) []*Honk {
 	rows, err := stmtHonksByHonker.Query(wanted, userid, honker, userid)
 	return getsomehonks(rows, err)
 }
-func gethonksbyxonker(userid int64, xonker string, wanted int64) []*Honk {
+func gethonksbyxonker(userid UserID, xonker string, wanted int64) []*Honk {
 	rows, err := stmtHonksByXonker.Query(wanted, userid, xonker, xonker, userid)
 	return getsomehonks(rows, err)
 }
-func gethonksbycombo(userid int64, combo string, wanted int64) []*Honk {
+func gethonksbycombo(userid UserID, combo string, wanted int64) []*Honk {
 	combo = "% " + combo + " %"
 	rows, err := stmtHonksByCombo.Query(wanted, userid, userid, combo, userid, wanted, userid, combo, userid)
 	return getsomehonks(rows, err)
 }
-func gethonksbyconvoy(userid int64, convoy string, wanted int64) []*Honk {
+func gethonksbyconvoy(userid UserID, convoy string, wanted int64) []*Honk {
 	rows, err := stmtHonksByConvoy.Query(wanted, userid, userid, convoy)
 	honks := getsomehonks(rows, err)
 	return honks
 }
-func gethonksbysearch(userid int64, q string, wanted int64) []*Honk {
+func gethonksbysearch(userid UserID, q string, wanted int64) []*Honk {
 	var queries []string
 	var params []interface{}
 	queries = append(queries, "honks.honkid > ?")
@@ -368,7 +368,7 @@ func gethonksbysearch(userid int64, q string, wanted int64) []*Honk {
 	honks := getsomehonks(rows, err)
 	return honks
 }
-func gethonksbyontology(userid int64, name string, wanted int64) []*Honk {
+func gethonksbyontology(userid UserID, name string, wanted int64) []*Honk {
 	rows, err := stmtHonksByOntology.Query(wanted, name, userid, userid)
 	honks := getsomehonks(rows, err)
 	return honks
@@ -669,7 +669,7 @@ func savechonk(ch *Chonk) error {
 	return err
 }
 
-func chatplusone(tx *sql.Tx, userid int64) {
+func chatplusone(tx *sql.Tx, userid UserID) {
 	user, ok := somenumberedusers.Get(userid)
 	if !ok {
 		return
@@ -687,7 +687,7 @@ func chatplusone(tx *sql.Tx, userid int64) {
 	somenumberedusers.Clear(user.ID)
 }
 
-func chatnewnone(userid int64) {
+func chatnewnone(userid UserID) {
 	user, ok := somenumberedusers.Get(userid)
 	if !ok || user.Options.ChatCount == 0 {
 		return
@@ -706,7 +706,7 @@ func chatnewnone(userid int64) {
 	somenumberedusers.Clear(user.ID)
 }
 
-func meplusone(tx *sql.Tx, userid int64) {
+func meplusone(tx *sql.Tx, userid UserID) {
 	user, ok := somenumberedusers.Get(userid)
 	if !ok {
 		return
@@ -724,7 +724,7 @@ func meplusone(tx *sql.Tx, userid int64) {
 	somenumberedusers.Clear(user.ID)
 }
 
-func menewnone(userid int64) {
+func menewnone(userid UserID) {
 	user, ok := somenumberedusers.Get(userid)
 	if !ok || user.Options.MeCount == 0 {
 		return
@@ -743,7 +743,7 @@ func menewnone(userid int64) {
 	somenumberedusers.Clear(user.ID)
 }
 
-func loadchatter(userid int64) []*Chatter {
+func loadchatter(userid UserID) []*Chatter {
 	duedt := time.Now().Add(-3 * 24 * time.Hour).UTC().Format(dbtimeformat)
 	rows, err := stmtLoadChonks.Query(userid, duedt)
 	if err != nil {

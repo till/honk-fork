@@ -266,7 +266,7 @@ func chpass(username string) {
 		elog.Print(err)
 		return
 	}
-	err = login.SetPassword(user.ID, pass)
+	err = login.SetPassword(int64(user.ID), pass)
 	if err != nil {
 		elog.Print(err)
 		return

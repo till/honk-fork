@@ -29,7 +29,7 @@ import (
 type Doover struct {
 	ID     int64
 	When   time.Time
-	Userid int64
+	Userid UserID
 	Tries  int64
 	Rcpt   string
 	Msgs   [][]byte
@@ -84,7 +84,7 @@ func letitslide(err error) bool {
 
 var dqmtx sync.Mutex
 
-func delinquent(userid int64, rcpt string, msg []byte) bool {
+func delinquent(userid UserID, rcpt string, msg []byte) bool {
 	dqmtx.Lock()
 	defer dqmtx.Unlock()
 	row := stmtDeliquentCheck.QueryRow(userid, rcpt)
@@ -108,7 +108,7 @@ func delinquent(userid int64, rcpt string, msg []byte) bool {
 	return true
 }
 
-func deliverate(userid int64, rcpt string, msg []byte) {
+func deliverate(userid UserID, rcpt string, msg []byte) {
 	if delinquent(userid, rcpt, msg) {
 		return
 	}

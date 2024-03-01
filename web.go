@@ -100,7 +100,7 @@ func getInfo(r *http.Request) map[string]interface{} {
 	if u := login.GetUserInfo(r); u != nil {
 		templinfo["UserInfo"], _ = butwhatabout(u.Username)
 		templinfo["UserStyle"] = getuserstyle(u)
-		combos, _ := combocache.Get(u.UserID)
+		combos, _ := combocache.Get(UserID(u.UserID))
 		templinfo["Combos"] = combos
 	}
 	return templinfo
@@ -110,7 +110,7 @@ var oldnews = gencache.New(gencache.Options[string, []byte]{
 	Fill: func(url string) ([]byte, bool) {
 		templinfo := getInfo(nil)
 		var honks []*Honk
-		var userid int64 = -1
+		var userid UserID = -1
 
 		templinfo["ServerMessage"] = serverMsg
 		switch url {
@@ -151,7 +151,7 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 	}
 	templinfo := getInfo(r)
 	var honks []*Honk
-	var userid int64 = -1
+	var userid UserID = -1
 
 	templinfo["ServerMessage"] = serverMsg
 	if u == nil || r.URL.Path == "/front" {
@@ -164,7 +164,7 @@ func homepage(w http.ResponseWriter, r *http.Request) {
 			honks = getpublichonks()
 		}
 	} else {
-		userid = u.UserID
+		userid = UserID(u.UserID)
 		switch r.URL.Path {
 		case "/atme":
 			templinfo["ServerMessage"] = "at me!"
@@ -634,13 +634,13 @@ func serveractor(w http.ResponseWriter, r *http.Request) {
 func ximport(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
 	xid := strings.TrimSpace(r.FormValue("q"))
-	xonk := getxonk(u.UserID, xid)
+	xonk := getxonk(UserID(u.UserID), xid)
 	if xonk == nil {
 		p, _ := investigate(xid)
 		if p != nil {
 			xid = p.XID
 		}
-		j, err := GetJunk(u.UserID, xid)
+		j, err := GetJunk(UserID(u.UserID), xid)
 		if err != nil {
 			http.Error(w, "error getting external object", http.StatusInternalServerError)
 			ilog.Printf("error getting external object: %s", err)
@@ -833,9 +833,9 @@ func showhonker(w http.ResponseWriter, r *http.Request) {
 	var honks []*Honk
 	if name == "" {
 		name = r.FormValue("xid")
-		honks = gethonksbyxonker(u.UserID, name, 0)
+		honks = gethonksbyxonker(UserID(u.UserID), name, 0)
 	} else {
-		honks = gethonksbyhonker(u.UserID, name, 0)
+		honks = gethonksbyhonker(UserID(u.UserID), name, 0)
 	}
 	miniform := templates.Sprintf(`<form action="/submithonker" method="POST">
 <input type="hidden" name="CSRF" value="%s">
@@ -854,8 +854,8 @@ func showhonker(w http.ResponseWriter, r *http.Request) {
 func showcombo(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 	u := login.GetUserInfo(r)
-	honks := gethonksbycombo(u.UserID, name, 0)
-	honks = osmosis(honks, u.UserID, true)
+	honks := gethonksbycombo(UserID(u.UserID), name, 0)
+	honks = osmosis(honks, UserID(u.UserID), true)
 	templinfo := getInfo(r)
 	templinfo["PageName"] = "combo"
 	templinfo["PageArg"] = name
@@ -866,12 +866,12 @@ func showcombo(w http.ResponseWriter, r *http.Request) {
 func showconvoy(w http.ResponseWriter, r *http.Request) {
 	c := r.FormValue("c")
 	u := login.GetUserInfo(r)
-	honks := gethonksbyconvoy(u.UserID, c, 0)
+	honks := gethonksbyconvoy(UserID(u.UserID), c, 0)
 	templinfo := getInfo(r)
 	if len(honks) > 0 {
 		templinfo["TopHID"] = honks[0].ID
 	}
-	honks = osmosis(honks, u.UserID, false)
+	honks = osmosis(honks, UserID(u.UserID), false)
 	//reversehonks(honks)
 	honks = threadsort(honks)
 	templinfo["PageName"] = "convoy"
@@ -887,7 +887,7 @@ func showsearch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u := login.GetUserInfo(r)
-	honks := gethonksbysearch(u.UserID, q, 0)
+	honks := gethonksbysearch(UserID(u.UserID), q, 0)
 	templinfo := getInfo(r)
 	templinfo["PageName"] = "search"
 	templinfo["PageArg"] = q
@@ -898,9 +898,9 @@ func showsearch(w http.ResponseWriter, r *http.Request) {
 func showontology(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 	u := login.GetUserInfo(r)
-	var userid int64 = -1
+	var userid UserID = -1
 	if u != nil {
-		userid = u.UserID
+		userid = UserID(u.UserID)
 	}
 	honks := gethonksbyontology(userid, "#"+name, 0)
 	if friendorfoe(r.Header.Get("Accept")) {
@@ -941,9 +941,9 @@ type Ont struct {
 
 func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
-	var userid int64 = -1
+	var userid UserID = -1
 	if u != nil {
-		userid = u.UserID
+		userid = UserID(u.UserID)
 	}
 	rows, err := stmtAllOnts.Query(userid)
 	if err != nil {
@@ -1292,7 +1292,7 @@ func showonehonk(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	u := login.GetUserInfo(r)
-	if u != nil && u.UserID != user.ID {
+	if u != nil && UserID(u.UserID) != user.ID {
 		u = nil
 	}
 	if !honk.Public {
@@ -1336,9 +1336,9 @@ func showonehonk(w http.ResponseWriter, r *http.Request) {
 }
 
 func honkpage(w http.ResponseWriter, u *login.UserInfo, honks []*Honk, templinfo map[string]interface{}) {
-	var userid int64 = -1
+	var userid UserID = -1
 	if u != nil {
-		userid = u.UserID
+		userid = UserID(u.UserID)
 		templinfo["User"], _ = butwhatabout(u.Username)
 	}
 	reverbolate(userid, honks)
@@ -1414,7 +1414,7 @@ func saveuser(w http.ResponseWriter, r *http.Request) {
 		elog.Printf("error bouting what: %s", err)
 	}
 	somenamedusers.Clear(u.Username)
-	somenumberedusers.Clear(u.UserID)
+	somenumberedusers.Clear(user.ID)
 	oldjonkers.Clear(u.Username)
 
 	if sendupdate {
@@ -1515,11 +1515,11 @@ func sendzonkofsorts(xonk *Honk, user *WhatAbout, what string, aux string) {
 func zonkit(w http.ResponseWriter, r *http.Request) {
 	wherefore := r.FormValue("wherefore")
 	what := r.FormValue("what")
-	userinfo := login.GetUserInfo(r)
-	user, _ := butwhatabout(userinfo.Username)
+	u := login.GetUserInfo(r)
+	user, _ := butwhatabout(u.Username)
 
 	if wherefore == "save" {
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil {
 			_, err := stmtUpdateFlags.Exec(flagIsSaved, xonk.ID)
 			if err != nil {
@@ -1530,7 +1530,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if wherefore == "unsave" {
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil {
 			_, err := stmtClearFlags.Exec(flagIsSaved, xonk.ID)
 			if err != nil {
@@ -1548,7 +1548,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 		if reaction == "none" {
 			return
 		}
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil {
 			_, err := stmtUpdateFlags.Exec(flagIsReacted, xonk.ID)
 			if err != nil {
@@ -1563,7 +1563,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 	defer oldjonks.Flush()
 
 	if wherefore == "ack" {
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil && !xonk.IsAcked() {
 			_, err := stmtUpdateFlags.Exec(flagIsAcked, xonk.ID)
 			if err != nil {
@@ -1575,7 +1575,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if wherefore == "deack" {
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil && xonk.IsAcked() {
 			_, err := stmtClearFlags.Exec(flagIsAcked, xonk.ID)
 			if err != nil {
@@ -1587,16 +1587,15 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if wherefore == "bonk" {
-		user, _ := butwhatabout(userinfo.Username)
 		bonkit(what, user)
 		return
 	}
 
 	if wherefore == "unbonk" {
-		xonk := getbonk(userinfo.UserID, what)
+		xonk := getbonk(user.ID, what)
 		if xonk != nil {
 			deletehonk(xonk.ID)
-			xonk = getxonk(userinfo.UserID, what)
+			xonk = getxonk(user.ID, what)
 			_, err := stmtClearFlags.Exec(flagIsBonked, xonk.ID)
 			if err != nil {
 				elog.Printf("error unbonking: %s", err)
@@ -1607,7 +1606,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if wherefore == "untag" {
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil {
 			_, err := stmtUpdateFlags.Exec(flagIsUntagged, xonk.ID)
 			if err != nil {
@@ -1615,7 +1614,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		var badparents map[string]bool
-		untagged.GetAndLock(userinfo.UserID, &badparents)
+		untagged.GetAndLock(user.ID, &badparents)
 		badparents[what] = true
 		untagged.Unlock()
 		return
@@ -1623,7 +1622,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 
 	ilog.Printf("zonking %s %s", wherefore, what)
 	if wherefore == "zonk" {
-		xonk := getxonk(userinfo.UserID, what)
+		xonk := getxonk(user.ID, what)
 		if xonk != nil {
 			deletehonk(xonk.ID)
 			if xonk.Whofore == 2 || xonk.Whofore == 3 {
@@ -1631,7 +1630,7 @@ func zonkit(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	_, err := stmtSaveZonker.Exec(userinfo.UserID, what, wherefore)
+	_, err := stmtSaveZonker.Exec(user.ID, what, wherefore)
 	if err != nil {
 		elog.Printf("error saving zonker: %s", err)
 		return
@@ -1642,7 +1641,7 @@ func edithonkpage(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
 	user, _ := butwhatabout(u.Username)
 	xid := r.FormValue("xid")
-	honk := getxonk(u.UserID, xid)
+	honk := getxonk(user.ID, xid)
 	if !canedithonk(user, honk) {
 		http.Error(w, "no editing that please", http.StatusInternalServerError)
 		return
@@ -1655,7 +1654,7 @@ func edithonkpage(w http.ResponseWriter, r *http.Request) {
 	for _, d := range honk.Donks {
 		savedfiles = append(savedfiles, fmt.Sprintf("%s:%d", d.XID, d.FileID))
 	}
-	reverbolate(u.UserID, honks)
+	reverbolate(user.ID, honks)
 
 	templinfo := getInfo(r)
 	templinfo["HonkCSRF"] = login.GetCSRF("honkhonk", r)
@@ -1691,7 +1690,7 @@ func newhonkpage(w http.ResponseWriter, r *http.Request) {
 	rid := r.FormValue("rid")
 	noise := ""
 
-	xonk := getxonk(u.UserID, rid)
+	xonk := getxonk(UserID(u.UserID), rid)
 	if xonk != nil {
 		_, replto := handles(xonk.Honker)
 		if replto != "" {
@@ -1840,14 +1839,14 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 		return nil
 	}
 
-	userinfo := login.GetUserInfo(r)
-	user, _ := butwhatabout(userinfo.Username)
+	u := login.GetUserInfo(r)
+	user, _ := butwhatabout(u.Username)
 
 	dt := time.Now().UTC()
 	updatexid := r.FormValue("updatexid")
 	var honk *Honk
 	if updatexid != "" {
-		honk = getxonk(userinfo.UserID, updatexid)
+		honk = getxonk(user.ID, updatexid)
 		if !canedithonk(user, honk) {
 			http.Error(w, "no editing that please", http.StatusInternalServerError)
 			return nil
@@ -1859,8 +1858,8 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 		xid := fmt.Sprintf("%s/%s/%s", user.URL, honkSep, xfiltrate())
 		what := "honk"
 		honk = &Honk{
-			UserID:   userinfo.UserID,
-			Username: userinfo.Username,
+			UserID:   user.ID,
+			Username: user.Name,
 			What:     what,
 			Honker:   user.URL,
 			XID:      xid,
@@ -1885,14 +1884,14 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 			return ""
 		})
 	}
-	noise = quickrename(noise, userinfo.UserID)
+	noise = quickrename(noise, user.ID)
 	honk.Noise = noise
 	precipitate(honk)
 	noise = honk.Noise
 	translate(honk)
 
 	if rid != "" {
-		xonk := getxonk(userinfo.UserID, rid)
+		xonk := getxonk(user.ID, rid)
 		if xonk == nil {
 			http.Error(w, "replyto disappeared", http.StatusNotFound)
 			return nil
@@ -2024,11 +2023,11 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 
 	if r.FormValue("preview") == "preview" {
 		honks := []*Honk{honk}
-		reverbolate(userinfo.UserID, honks)
+		reverbolate(user.ID, honks)
 		templinfo := getInfo(r)
 		templinfo["HonkCSRF"] = login.GetCSRF("honkhonk", r)
 		templinfo["Honks"] = honks
-		templinfo["MapLink"] = getmaplink(userinfo)
+		templinfo["MapLink"] = getmaplink(u)
 		templinfo["InReplyTo"] = r.FormValue("rid")
 		templinfo["Noise"] = r.FormValue("noise")
 		templinfo["SavedFile"] = donkxid
@@ -2070,9 +2069,9 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 }
 
 func showhonkers(w http.ResponseWriter, r *http.Request) {
-	userinfo := login.GetUserInfo(r)
+	userid := UserID(login.GetUserInfo(r).UserID)
 	templinfo := getInfo(r)
-	templinfo["Honkers"] = gethonkers(userinfo.UserID)
+	templinfo["Honkers"] = gethonkers(userid)
 	templinfo["HonkerCSRF"] = login.GetCSRF("submithonker", r)
 	err := readviews.Execute(w, "honkers.html", templinfo)
 	if err != nil {
@@ -2082,8 +2081,8 @@ func showhonkers(w http.ResponseWriter, r *http.Request) {
 
 func showchatter(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
-	chatnewnone(u.UserID)
-	chatter := loadchatter(u.UserID)
+	chatnewnone(UserID(u.UserID))
+	chatter := loadchatter(UserID(u.UserID))
 	for _, chat := range chatter {
 		for _, ch := range chat.Chonks {
 			filterchonk(ch)
@@ -2109,14 +2108,14 @@ func submitchonk(w http.ResponseWriter, r *http.Request) {
 	xid := fmt.Sprintf("%s/%s/%s", user.URL, "chonk", xfiltrate())
 
 	if !strings.HasPrefix(target, "https://") {
-		target = fullname(target, u.UserID)
+		target = fullname(target, user.ID)
 	}
 	if target == "" {
 		http.Error(w, "who is that?", http.StatusInternalServerError)
 		return
 	}
 	ch := Chonk{
-		UserID: u.UserID,
+		UserID: user.ID,
 		XID:    xid,
 		Who:    user.URL,
 		Target: target,
@@ -2142,7 +2141,7 @@ func submitchonk(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/chatter", http.StatusSeeOther)
 }
 
-var combocache = gencache.New(gencache.Options[int64, []string]{Fill: func(userid int64) ([]string, bool) {
+var combocache = gencache.New(gencache.Options[UserID, []string]{Fill: func(userid UserID) ([]string, bool) {
 	honkers := gethonkers(userid)
 	var combos []string
 	for _, h := range honkers {
@@ -2194,7 +2193,7 @@ func submithonker(w http.ResponseWriter, r *http.Request) *Honker {
 	meta.Notes = strings.TrimSpace(r.FormValue("notes"))
 	mj, _ := jsonify(&meta)
 
-	defer honkerinvalidator.Clear(u.UserID)
+	defer honkerinvalidator.Clear(user.ID)
 
 	// mostly dummy, fill in later...
 	h := &Honker{
@@ -2213,7 +2212,7 @@ func submithonker(w http.ResponseWriter, r *http.Request) *Honker {
 		if r.FormValue("sub") == "sub" {
 			followyou(user, honkerid, false)
 		}
-		_, err := stmtUpdateHonker.Exec(name, combos, mj, honkerid, u.UserID)
+		_, err := stmtUpdateHonker.Exec(name, combos, mj, honkerid, user.ID)
 		if err != nil {
 			elog.Printf("update honker err: %s", err)
 			return nil
@@ -2245,9 +2244,9 @@ func submithonker(w http.ResponseWriter, r *http.Request) *Honker {
 }
 
 func hfcspage(w http.ResponseWriter, r *http.Request) {
-	userinfo := login.GetUserInfo(r)
+	u := login.GetUserInfo(r)
 
-	filters := getfilters(userinfo.UserID, filtAny)
+	filters := getfilters(UserID(u.UserID), filtAny)
 
 	templinfo := getInfo(r)
 	templinfo["Filters"] = filters
@@ -2486,7 +2485,7 @@ type Hydration struct {
 
 func webhydra(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
-	userid := u.UserID
+	userid := UserID(u.UserID)
 	templinfo := getInfo(r)
 	templinfo["HonkCSRF"] = login.GetCSRF("honkhonk", r)
 	page := r.FormValue("page")
@@ -2592,7 +2591,7 @@ func honkhonkline() {
 
 func apihandler(w http.ResponseWriter, r *http.Request) {
 	u := login.GetUserInfo(r)
-	userid := u.UserID
+	userid := UserID(u.UserID)
 	action := r.FormValue("action")
 	wait, _ := strconv.ParseInt(r.FormValue("wait"), 10, 0)
 	dlog.Printf("api request '%s' on behalf of %s", action, u.Username)
@@ -2655,7 +2654,7 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 			honks = gethonksbyxonker(userid, xid, wanted)
 		case "search":
 			q := r.FormValue("q")
-			honks = gethonksbysearch(u.UserID, q, wanted)
+			honks = gethonksbysearch(userid, q, wanted)
 		default:
 			http.Error(w, "unknown page", http.StatusNotFound)
 			return
@@ -2687,7 +2686,7 @@ func apihandler(w http.ResponseWriter, r *http.Request) {
 		}
 	case "gethonkers":
 		j := junk.New()
-		j["honkers"] = gethonkers(u.UserID)
+		j["honkers"] = gethonkers(userid)
 		j.Write(w)
 	case "savehonker":
 		h := submithonker(w, r)

@@ -25,7 +25,7 @@ import (
 )
 
 type WhatAbout struct {
-	ID         int64
+	ID         UserID
 	Name       string
 	Display    string
 	About      string
@@ -59,12 +59,14 @@ type KeyInfo struct {
 	seckey  httpsig.PrivateKey
 }
 
-const serverUID int64 = -2
-const readyLuserOne int64 = 1
+type UserID int64
+
+const serverUID UserID = -2
+const readyLuserOne UserID = 1
 
 type Honk struct {
 	ID        int64
-	UserID    int64
+	UserID    UserID
 	Username  string
 	What      string
 	Honker    string
@@ -108,7 +110,7 @@ type Badonk struct {
 
 type Chonk struct {
 	ID     int64
-	UserID int64
+	UserID UserID
 	XID    string
 	Who    string
 	Target string
@@ -247,7 +249,7 @@ type Time struct {
 
 type Honker struct {
 	ID     int64
-	UserID int64
+	UserID UserID
 	Name   string
 	XID    string
 	Handle string

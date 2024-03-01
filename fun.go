@@ -63,7 +63,7 @@ func loadLingo() {
 	}
 }
 
-func reverbolate(userid int64, honks []*Honk) {
+func reverbolate(userid UserID, honks []*Honk) {
 	user, _ := somenumberedusers.Get(userid)
 	for _, h := range honks {
 		h.What += "ed"
@@ -524,7 +524,7 @@ func memetize(honk *Honk) {
 
 var re_quickmention = regexp.MustCompile("(^|[ \n])@[[:alnum:]_]+([ \n:;.,']|$)")
 
-func quickrename(s string, userid int64) string {
+func quickrename(s string, userid UserID) string {
 	nonstop := true
 	for nonstop {
 		nonstop = false
@@ -559,7 +559,7 @@ func quickrename(s string, userid int64) string {
 	return s
 }
 
-var shortnames = gencache.New(gencache.Options[int64, map[string]string]{Fill: func(userid int64) (map[string]string, bool) {
+var shortnames = gencache.New(gencache.Options[UserID, map[string]string]{Fill: func(userid UserID) (map[string]string, bool) {
 	honkers := gethonkers(userid)
 	m := make(map[string]string)
 	for _, h := range honkers {
@@ -568,7 +568,7 @@ var shortnames = gencache.New(gencache.Options[int64, map[string]string]{Fill: f
 	return m, true
 }, Invalidator: &honkerinvalidator})
 
-func shortname(userid int64, xid string) string {
+func shortname(userid UserID, xid string) string {
 	m, ok := shortnames.Get(userid)
 	if ok {
 		return m[xid]
@@ -576,7 +576,7 @@ func shortname(userid int64, xid string) string {
 	return ""
 }
 
-var fullnames = gencache.New(gencache.Options[int64, map[string]string]{Fill: func(userid int64) (map[string]string, bool) {
+var fullnames = gencache.New(gencache.Options[UserID, map[string]string]{Fill: func(userid UserID) (map[string]string, bool) {
 	honkers := gethonkers(userid)
 	m := make(map[string]string)
 	for _, h := range honkers {
@@ -585,7 +585,7 @@ var fullnames = gencache.New(gencache.Options[int64, map[string]string]{Fill: fu
 	return m, true
 }, Invalidator: &honkerinvalidator})
 
-func fullname(name string, userid int64) string {
+func fullname(name string, userid UserID) string {
 	m, ok := fullnames.Get(userid)
 	if ok {
 		return m[name]
@@ -688,7 +688,7 @@ func oneofakind(a []string) []string {
 	return a[:j]
 }
 
-var ziggies = gencache.New(gencache.Options[int64, *KeyInfo]{Fill: func(userid int64) (*KeyInfo, bool) {
+var ziggies = gencache.New(gencache.Options[UserID, *KeyInfo]{Fill: func(userid UserID) (*KeyInfo, bool) {
 	user, ok := somenumberedusers.Get(userid)
 	if !ok {
 		return nil, false
@@ -699,7 +699,7 @@ var ziggies = gencache.New(gencache.Options[int64, *KeyInfo]{Fill: func(userid i
 	return ki, true
 }})
 
-func ziggy(userid int64) *KeyInfo {
+func ziggy(userid UserID) *KeyInfo {
 	ki, _ := ziggies.Get(userid)
 	return ki
 }
