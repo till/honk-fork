@@ -250,13 +250,14 @@ func rejectorigin(userid UserID, origin string, isannounce bool) bool {
 func rejectactor(userid UserID, actor string) bool {
 	filts := rejectfilters(userid, actor)
 	for _, f := range filts {
-		if f.IsAnnounce {
+		if f.IsAnnounce || f.IsReply {
 			continue
 		}
-		if f.Actor == actor {
-			ilog.Printf("rejecting actor: %s", actor)
-			return true
+		if f.Text != "" {
+			continue
 		}
+		ilog.Printf("rejecting actor: %s", actor)
+		return true
 	}
 	origin := originate(actor)
 	if origin == "" {
