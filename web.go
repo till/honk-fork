@@ -2030,6 +2030,10 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 		templinfo["MapLink"] = getmaplink(u)
 		templinfo["InReplyTo"] = r.FormValue("rid")
 		templinfo["Noise"] = r.FormValue("noise")
+		templinfo["Onties"] = honk.Onties
+		templinfo["SeeAlso"] = honk.SeeAlso
+		templinfo["Link"] = honk.Link
+		templinfo["LegalName"] = honk.LegalName
 		templinfo["SavedFile"] = donkxid
 		if tm := honk.Time; tm != nil {
 			templinfo["ShowTime"] = " "
