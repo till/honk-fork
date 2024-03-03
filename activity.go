@@ -838,6 +838,10 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 			bonker = ""
 			obj = item
 			what = "chonk"
+		case "Like":
+			return nil
+		case "Dislike":
+			return nil
 		default:
 			ilog.Printf("unknown activity: %s", what)
 			dumpactivity(item)
