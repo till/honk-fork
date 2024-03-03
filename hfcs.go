@@ -114,6 +114,7 @@ func filtcachefiller(userid UserID) (afiltermap, bool) {
 				continue
 			}
 			if expflush.IsZero() || filt.Expiration.Before(expflush) {
+				dlog.Printf("filter expired: %s", filt.Name)
 				expflush = filt.Expiration
 			}
 		}
@@ -184,6 +185,7 @@ func filtcachefiller(userid UserID) (afiltermap, bool) {
 }
 
 func filtcacheclear(userid UserID, dur time.Duration) {
+	dlog.Printf("clearing filters in %s", dur.String())
 	time.Sleep(dur + time.Second)
 	filtInvalidator.Clear(userid)
 }
