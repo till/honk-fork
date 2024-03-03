@@ -995,7 +995,7 @@ func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 	templinfo := getInfo(r)
 	templinfo["Pops"] = pops
 	templinfo["Onts"] = onts
-	templinfo["FirstRune"] = func(s string) rune { r, _ := utf8.DecodeRuneInString(s); return r }
+	templinfo["FirstRune"] = firstRune
 	err = readviews.Execute(w, "onts.html", templinfo)
 	if err != nil {
 		elog.Print(err)
@@ -2084,10 +2084,23 @@ func submithonk(w http.ResponseWriter, r *http.Request) *Honk {
 	return honk
 }
 
+func firstRune(s string) rune { r, _ := utf8.DecodeRuneInString(s); return r }
+
 func showhonkers(w http.ResponseWriter, r *http.Request) {
 	userid := UserID(login.GetUserInfo(r).UserID)
+	honkers := gethonkers(userid)
+	var letters []string
+	var lastrune rune = -1
+	for _, h := range honkers {
+		if r := firstRune(h.Name); r != lastrune {
+			letters = append(letters, string(r))
+			lastrune = r
+		}
+	}
 	templinfo := getInfo(r)
-	templinfo["Honkers"] = gethonkers(userid)
+	templinfo["FirstRune"] = firstRune
+	templinfo["Letters"] = letters
+	templinfo["Honkers"] = honkers
 	templinfo["HonkerCSRF"] = login.GetCSRF("submithonker", r)
 	err := readviews.Execute(w, "honkers.html", templinfo)
 	if err != nil {
