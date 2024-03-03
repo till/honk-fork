@@ -3003,7 +3003,7 @@ func serve() {
 	loggedin.HandleFunc("/honkers", showhonkers)
 	loggedin.HandleFunc("/h/{name:[\\pL[:digit:]_.-]+}", showhonker)
 	loggedin.HandleFunc("/h", showhonker)
-	loggedin.HandleFunc("/c/{name:[\\pL[:digit:]_.-]+}", showcombo)
+	loggedin.HandleFunc("/c/{name:[\\pL[:digit:]#_.-]+}", showcombo)
 	loggedin.HandleFunc("/c", showcombos)
 	loggedin.HandleFunc("/t", showconvoy)
 	loggedin.HandleFunc("/q", showsearch)
