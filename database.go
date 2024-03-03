@@ -1125,6 +1125,9 @@ func savehonker(user *WhatAbout, url, name, flavor, combos, mj string) (int64, s
 		return 0, "", err
 	}
 	honkerid, _ := res.LastInsertId()
+	if strings.HasSuffix(url, ".rss") {
+		go syndicate(user, url)
+	}
 	return honkerid, flavor, nil
 }
 
