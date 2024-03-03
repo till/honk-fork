@@ -58,6 +58,8 @@ input {
 	font-size: 1.0em;
 	line-height: 1.2em;
 	padding: 0.4em;
+	box-sizing: border-box;
+	width: 100%;
 }
 #honkform input {
 	font-size: 0.8em;
