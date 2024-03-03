@@ -989,12 +989,21 @@ func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 	if len(pops) > 40 {
 		pops = pops[:40]
 	}
+	var letters []string
+	var lastrune rune = -1
+	for _, o := range onts {
+		if r := firstRune(o.Name); r != lastrune {
+			letters = append(letters, string(r))
+			lastrune = r
+		}
+	}
 	if u == nil && !develMode {
 		w.Header().Set("Cache-Control", "max-age=300")
 	}
 	templinfo := getInfo(r)
 	templinfo["Pops"] = pops
 	templinfo["Onts"] = onts
+	templinfo["Letters"] = letters
 	templinfo["FirstRune"] = firstRune
 	err = readviews.Execute(w, "onts.html", templinfo)
 	if err != nil {
