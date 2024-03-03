@@ -316,12 +316,35 @@ func showrss(w http.ResponseWriter, r *http.Request) {
 }
 
 func crappola(j junk.Junk) bool {
-	t, _ := j.GetString("type")
-	a, _ := j.GetString("actor")
-	o, _ := j.GetString("object")
-	if t == "Delete" && a == o {
-		dlog.Printf("crappola from %s", a)
+	t := firstofmany(j, "type")
+	if t == "Delete" {
+		a, _ := j.GetString("actor")
+		o, _ := j.GetString("object")
+		if a == o {
+			dlog.Printf("crappola from %s", a)
+			return true
+		}
+	}
+	if t == "Announce" {
+		if obj, ok := j.GetMap("object"); ok {
+			j = obj
+			t = firstofmany(j, "type")
+		}
+	}
+	if t == "Undo" {
+		if obj, ok := j.GetMap("object"); ok {
+			j = obj
+			t = firstofmany(j, "type")
+		}
+	}
+	if t == "Like" || t == "Dislike" || t == "Listen" {
 		return true
+	}
+	if t == "EmojiReact" {
+		o, _ := j.GetString("object")
+		if originate(o) != serverName {
+			return true
+		}
 	}
 	return false
 }
@@ -412,19 +435,6 @@ func inbox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	what := firstofmany(j, "type")
-	obj, _ := j.GetString("object")
-	switch what {
-	case "Like":
-		return
-	case "Dislike":
-		return
-	case "Listen":
-		return
-	case "EmojiReact":
-		if originate(obj) != serverName {
-			return
-		}
-	}
 	who, _ := j.GetString("actor")
 	if rejectactor(user.ID, who) {
 		return
@@ -468,8 +478,10 @@ func inbox(w http.ResponseWriter, r *http.Request) {
 		ilog.Printf("ping from %s: %s", who, id)
 		pong(user, who, id)
 	case "Pong":
+		obj, _ := j.GetString("object")
 		ilog.Printf("pong from %s: %s", who, obj)
 	case "Follow":
+		obj, _ := j.GetString("object")
 		if obj != user.URL {
 			ilog.Printf("can't follow %s", obj)
 			return
