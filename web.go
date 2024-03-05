@@ -691,7 +691,7 @@ func xzone(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-	var honkers []Honker
+	honkers := make([]Honker, 0, 256)
 	for rows.Next() {
 		var xid string
 		rows.Scan(&xid)
@@ -720,7 +720,7 @@ var oldoutbox = gencache.New(gencache.Options[string, []byte]{Fill: func(name st
 		honks = honks[0:20]
 	}
 
-	var jonks []junk.Junk
+	jonks := make([]junk.Junk, 0, 256)
 	for _, h := range honks {
 		j, _ := jonkjonk(user, h)
 		jonks = append(jonks, j)
@@ -920,7 +920,7 @@ func showontology(w http.ResponseWriter, r *http.Request) {
 			honks = honks[0:40]
 		}
 
-		var xids []string
+		xids := make([]string, 0, len(honks))
 		for _, h := range honks {
 			xids = append(xids, h.XID)
 		}
@@ -963,7 +963,8 @@ func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer rows.Close()
-	var onts, pops []Ont
+	onts := make([]Ont, 0, 1024)
+	pops := make([]Ont, 0, 128)
 	for rows.Next() {
 		var o Ont
 		err := rows.Scan(&o.Name, &o.Count)
@@ -989,7 +990,7 @@ func thelistingoftheontologies(w http.ResponseWriter, r *http.Request) {
 	if len(pops) > 40 {
 		pops = pops[:40]
 	}
-	var letters []string
+	letters := make([]string, 0, 64)
 	var lastrune rune = -1
 	for _, o := range onts {
 		if r := firstRune(o.Name); r != lastrune {
@@ -1170,15 +1171,15 @@ func threadsort(honks []*Honk) []*Honk {
 	sort.Slice(honks, func(i, j int) bool {
 		return honks[i].Date.Before(honks[j].Date)
 	})
-	honkx := make(map[string]*Honk)
-	kids := make(map[string][]*Honk)
+	honkx := make(map[string]*Honk, len(honks))
+	kids := make(map[string][]*Honk, len(honks))
 	for _, h := range honks {
 		honkx[h.XID] = h
 		rid := h.RID
 		kids[rid] = append(kids[rid], h)
 	}
-	done := make(map[*Honk]bool)
-	var thread []*Honk
+	done := make(map[*Honk]bool, len(honks))
+	thread := make([]*Honk, 0, len(honks))
 	var nextlevel func(p *Honk)
 	level := 0
 	nextlevel = func(p *Honk) {
@@ -1335,7 +1336,7 @@ func showonehonk(w http.ResponseWriter, r *http.Request) {
 	rawhonks := gethonksbyconvoy(honk.UserID, honk.Convoy, 0)
 	//reversehonks(rawhonks)
 	rawhonks = threadsort(rawhonks)
-	var honks []*Honk
+	honks := make([]*Honk, 0, len(rawhonks))
 	for i, h := range rawhonks {
 		if h.XID == xid {
 			templinfo["Honkology"] = honkology(h)
@@ -1668,10 +1669,10 @@ func edithonkpage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	noise := honk.Noise
-	var savedfiles []string
 
 	honks := []*Honk{honk}
 	donksforhonks(honks)
+	var savedfiles []string
 	for _, d := range honk.Donks {
 		savedfiles = append(savedfiles, fmt.Sprintf("%s:%d", d.XID, d.FileID))
 	}
@@ -2098,7 +2099,7 @@ func firstRune(s string) rune { r, _ := utf8.DecodeRuneInString(s); return r }
 func showhonkers(w http.ResponseWriter, r *http.Request) {
 	userid := UserID(login.GetUserInfo(r).UserID)
 	honkers := gethonkers(userid)
-	var letters []string
+	letters := make([]string, 0, 64)
 	var lastrune rune = -1
 	for _, h := range honkers {
 		if r := firstRune(h.Name); r != lastrune {
@@ -2181,7 +2182,7 @@ func submitchonk(w http.ResponseWriter, r *http.Request) {
 
 var combocache = gencache.New(gencache.Options[UserID, []string]{Fill: func(userid UserID) ([]string, bool) {
 	honkers := gethonkers(userid)
-	var combos []string
+	combos := make([]string, 0, len(honkers))
 	for _, h := range honkers {
 		combos = append(combos, h.Combos...)
 	}
@@ -2821,6 +2822,7 @@ func emuinit() {
 		emunames, _ = dir.Readdirnames(0)
 		dir.Close()
 	}
+	allemus = make([]Emu, 0, len(emunames))
 	for _, e := range emunames {
 		if len(e) <= 4 {
 			continue
