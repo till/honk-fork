@@ -386,7 +386,7 @@ func getsomehonks(rows *sql.Rows, err error) []*Honk {
 		return nil
 	}
 	defer rows.Close()
-	var honks []*Honk
+	honks := make([]*Honk, 0, 64)
 	for rows.Next() {
 		h := scanhonk(rows)
 		if h != nil {
@@ -421,8 +421,8 @@ func scanhonk(row RowLike) *Honk {
 
 func donksforhonks(honks []*Honk) {
 	db := opendatabase()
-	var ids []string
-	hmap := make(map[int64]*Honk)
+	ids := make([]string, 0, len(honks))
+	hmap := make(map[int64]*Honk, len(honks))
 	for _, h := range honks {
 		ids = append(ids, fmt.Sprintf("%d", h.ID))
 		hmap[h.ID] = h
@@ -535,8 +535,8 @@ func donksforhonks(honks []*Honk) {
 
 func donksforchonks(chonks []*Chonk) {
 	db := opendatabase()
-	var ids []string
-	chmap := make(map[int64]*Chonk)
+	ids := make([]string, 0, len(chonks))
+	chmap := make(map[int64]*Chonk, len(chonks))
 	for _, ch := range chonks {
 		ids = append(ids, fmt.Sprintf("%d", ch.ID))
 		chmap[ch.ID] = ch

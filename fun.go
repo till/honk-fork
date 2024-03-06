@@ -685,6 +685,11 @@ func oneofakind(a []string) []string {
 			j++
 		}
 	}
+	if j < len(a)/2 {
+		rv := make([]string, j)
+		copy(rv, a[:j])
+		return rv
+	}
 	return a[:j]
 }
 
