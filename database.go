@@ -650,6 +650,7 @@ func savechonk(ch *Chonk) error {
 		elog.Printf("can't begin tx: %s", err)
 		return err
 	}
+	defer tx.Rollback()
 
 	res, err := tx.Stmt(stmtSaveChonk).Exec(ch.UserID, ch.XID, ch.Who, ch.Target, dt, ch.Noise, ch.Format)
 	if err == nil {
@@ -663,8 +664,6 @@ func savechonk(ch *Chonk) error {
 		}
 		chatplusone(tx, ch.UserID)
 		err = tx.Commit()
-	} else {
-		tx.Rollback()
 	}
 	return err
 }
@@ -849,6 +848,7 @@ func savehonk(h *Honk) error {
 		elog.Printf("can't begin tx: %s", err)
 		return err
 	}
+	defer tx.Rollback()
 	plain := h.Plain()
 
 	res, err := tx.Stmt(stmtSaveHonk).Exec(h.UserID, h.What, h.Honker, h.XID, h.RID, dt, h.URL,
@@ -864,8 +864,6 @@ func savehonk(h *Honk) error {
 			meplusone(tx, h.UserID)
 		}
 		err = tx.Commit()
-	} else {
-		tx.Rollback()
 	}
 	if err != nil {
 		elog.Printf("error saving honk: %s", err)
@@ -885,6 +883,7 @@ func updatehonk(h *Honk) error {
 		elog.Printf("can't begin tx: %s", err)
 		return err
 	}
+	defer tx.Rollback()
 	plain := h.Plain()
 
 	err = deleteextras(tx, h.ID, false)
@@ -906,8 +905,6 @@ func updatehonk(h *Honk) error {
 	}
 	if err == nil {
 		err = tx.Commit()
-	} else {
-		tx.Rollback()
 	}
 	if err != nil {
 		elog.Printf("error updating honk %d: %s", h.ID, err)
@@ -922,6 +919,7 @@ func deletehonk(honkid int64) error {
 		elog.Printf("can't begin tx: %s", err)
 		return err
 	}
+	defer tx.Rollback()
 
 	err = deleteextras(tx, honkid, true)
 	if err == nil {
@@ -929,8 +927,6 @@ func deletehonk(honkid int64) error {
 	}
 	if err == nil {
 		err = tx.Commit()
-	} else {
-		tx.Rollback()
 	}
 	if err != nil {
 		elog.Printf("error deleting honk %d: %s", honkid, err)
@@ -1026,7 +1022,10 @@ func addreaction(user *WhatAbout, xid string, who, react string) {
 	h.Badonks = append(h.Badonks, Badonk{Who: who, What: react})
 	j, _ := jsonify(h.Badonks)
 	db := opendatabase()
-	tx, _ := db.Begin()
+	tx, err := db.Begin()
+	if err != nil {
+		return
+	}
 	_, _ = tx.Stmt(stmtDeleteOneMeta).Exec(h.ID, "badonks")
 	_, _ = tx.Stmt(stmtSaveMeta).Exec(h.ID, "badonks", j)
 	tx.Commit()
