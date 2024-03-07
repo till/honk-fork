@@ -389,7 +389,7 @@ func importTwitter(username, source string) {
 	}
 
 	var tweets []*Tweet
-	fd, err := os.Open(source + "/tweets.js")
+	fd, err := os.Open(source + "/tweet.js")
 	if err != nil {
 		elog.Fatal(err)
 	}
@@ -461,7 +461,7 @@ func importTwitter(username, source string) {
 			u := m.MediaURL
 			idx := strings.LastIndexByte(u, '/')
 			u = u[idx+1:]
-			fname := fmt.Sprintf("%s/tweets_media/%s-%s", source, t.Tweet.IdStr, u)
+			fname := fmt.Sprintf("%s/tweet_media/%s-%s", source, t.Tweet.IdStr, u)
 			data, err := ioutil.ReadFile(fname)
 			if err != nil {
 				elog.Printf("error reading media: %s", fname)
