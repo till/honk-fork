@@ -293,6 +293,33 @@ func gethonksbycombo(userid UserID, combo string, wanted int64) []*Honk {
 func gethonksbyconvoy(userid UserID, convoy string, wanted int64) []*Honk {
 	rows, err := stmtHonksByConvoy.Query(wanted, userid, userid, convoy)
 	honks := getsomehonks(rows, err)
+	seen := make(map[string]bool, len(honks))
+	for _, h := range honks {
+		seen[h.XID] = true
+	}
+	var missing []string
+	for _, h := range honks {
+		if h.RID != "" && !seen[h.RID] {
+			missing = append(missing, h.RID)
+		}
+	}
+	for len(missing) > 0 {
+		dlog.Printf("missing honks: %v", missing)
+		nextround := missing
+		missing = nil
+		for _, xid := range nextround {
+			seen[xid] = true
+		}
+		for _, xid := range nextround {
+			h := getxonk(userid, xid)
+			if h != nil {
+				honks = append(honks, h)
+				if h.RID != "" && !seen[h.RID] {
+					missing = append(missing, h.RID)
+				}
+			}
+		}
+	}
 	return honks
 }
 func gethonksbysearch(userid UserID, q string, wanted int64) []*Honk {
