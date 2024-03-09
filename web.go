@@ -408,7 +408,37 @@ func pong(user *WhatAbout, who string, obj string) {
 	}
 }
 
-func inbox(w http.ResponseWriter, r *http.Request) {
+func getinbox(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["name"]
+	user, err := butwhatabout(name)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	honks := gethonksforuser(user.ID, 0)
+	if len(honks) > 20 {
+		honks = honks[0:20]
+	}
+
+	jonks := make([]junk.Junk, 0, 256)
+	for _, h := range honks {
+		j, _ := jonkjonk(user, h)
+		jonks = append(jonks, j)
+	}
+
+	j := junk.New()
+	j["@context"] = itiswhatitis
+	j["id"] = user.URL + "/inbox"
+	j["attributedTo"] = user.URL
+	j["type"] = "OrderedCollection"
+	j["totalItems"] = len(jonks)
+	j["orderedItems"] = jonks
+
+	w.Header().Set("Content-Type", theonetruename)
+	j.Write(w)
+}
+
+func postinbox(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 	user, err := butwhatabout(name)
 	if err != nil {
@@ -737,7 +767,7 @@ var oldoutbox = gencache.New(gencache.Options[string, []byte]{Fill: func(name st
 	return j.ToBytes(), true
 }, Duration: 1 * time.Minute})
 
-func outbox(w http.ResponseWriter, r *http.Request) {
+func getoutbox(w http.ResponseWriter, r *http.Request) {
 	name := mux.Vars(r)["name"]
 	user, err := butwhatabout(name)
 	if err != nil {
@@ -754,6 +784,39 @@ func outbox(w http.ResponseWriter, r *http.Request) {
 		w.Write(j)
 	} else {
 		http.NotFound(w, r)
+	}
+}
+
+func postoutbox(w http.ResponseWriter, r *http.Request) {
+	name := mux.Vars(r)["name"]
+	user, err := butwhatabout(name)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	limiter := io.LimitReader(r.Body, 1*1024*1024)
+	j, err := junk.Read(limiter)
+	if err != nil {
+		http.Error(w, "that's not json!", http.StatusBadRequest)
+		return
+	}
+
+	who, _ := j.GetString("actor")
+	if who != user.URL {
+		http.Error(w, "that's not you!", http.StatusForbidden)
+		return
+	}
+	what := firstofmany(j, "type")
+	switch what {
+	default:
+		dlog.Printf("saving my own xonk")
+		honk := xonksaver2(user, j, serverName, true)
+		if honk == nil {
+			dlog.Printf("returned nil")
+			return
+		}
+		dlog.Printf("honking it")
+		go honkworldwide(user, honk)
 	}
 }
 
@@ -2947,8 +3010,10 @@ func serve() {
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/"+honkSep+"/{xid:[\\pL[:digit:]]+}", showonehonk)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/"+honkSep+"/{xid:[\\pL[:digit:]]+}.json", showonehonk)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/rss", showrss)
-	posters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/inbox", inbox)
-	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/outbox", outbox)
+	posters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/inbox", postinbox)
+	getters.Handle("/"+userSep+"/{name:[\\pL[:digit:]]+}/inbox", login.TokenRequired(http.HandlerFunc(getinbox)))
+	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/outbox", getoutbox)
+	posters.Handle("/"+userSep+"/{name:[\\pL[:digit:]]+}/outbox", login.TokenRequired(http.HandlerFunc(postoutbox)))
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/followers", emptiness)
 	getters.HandleFunc("/"+userSep+"/{name:[\\pL[:digit:]]+}/following", emptiness)
 	getters.HandleFunc("/a", avatate)

@@ -583,11 +583,17 @@ var re_roma1ink = regexp.MustCompile(`https://[[:alnum:].]+/notice/[[:alnum:]]+`
 var re_qtlinks = regexp.MustCompile(`>https://[^\s<]+<`)
 
 func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
+	return xonksaver2(user, item, origin, false)
+}
+func xonksaver2(user *WhatAbout, item junk.Junk, origin string, myown bool) *Honk {
 	depth := 0
 	maxdepth := 10
 	currenttid := ""
 	goingup := 0
-	var xonkxonkfn func(junk.Junk, string, bool, string) *Honk
+	var xonkxonkfn2 func(junk.Junk, string, bool, string, bool) *Honk
+	xonkxonkfn := func(item junk.Junk, origin string, isUpdate bool, bonker string) *Honk {
+		return xonkxonkfn2(item, origin, isUpdate, bonker, false)
+	}
 
 	qutify := func(user *WhatAbout, qurl, content string) string {
 		if depth >= maxdepth {
@@ -658,7 +664,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		xonkxonkfn(obj, originate(xid), false, "")
 	}
 
-	xonkxonkfn = func(item junk.Junk, origin string, isUpdate bool, bonker string) *Honk {
+	xonkxonkfn2 = func(item junk.Junk, origin string, isUpdate bool, bonker string, myown bool) *Honk {
 		id, _ := item.GetString("id")
 		what := firstofmany(item, "type")
 		dt, ok := item.GetString("published")
@@ -777,7 +783,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				ilog.Printf("no object for creation %s", id)
 				return nil
 			}
-			return xonkxonkfn(obj, origin, isUpdate, bonker)
+			return xonkxonkfn2(obj, origin, isUpdate, bonker, myown)
 		case "Read":
 			xid, ok = item.GetString("object")
 			if ok {
@@ -875,6 +881,11 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		xonk.Honker, _ = item.GetString("actor")
 		if xonk.Honker == "" {
 			xonk.Honker = extractattrto(item)
+		}
+		if myown && xonk.Honker != user.URL {
+			ilog.Printf("not allowing local impersonation: %s <> %s", xonk.Honker, user.URL)
+			item.Write(ilog.Writer())
+			return nil
 		}
 		if originate(xonk.Honker) != origin {
 			ilog.Printf("out of bounds honker %s from %s", xonk.Honker, origin)
@@ -1193,9 +1204,17 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		xonk.Format = "html"
 		xonk.Convoy = convoy
 		xonk.Mentions = mentions
-		for _, m := range mentions {
-			if m.Where == user.URL {
-				xonk.Whofore = 1
+		if myown {
+			if xonk.Public {
+				xonk.Whofore = 2
+			} else {
+				xonk.Whofore = 3
+			}
+		} else {
+			for _, m := range mentions {
+				if m.Where == user.URL {
+					xonk.Whofore = 1
+				}
 			}
 		}
 		imaginate(&xonk)
@@ -1246,7 +1265,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 				updatehonk(&xonk)
 			}
 		}
-		if !isUpdate && needxonk(user, &xonk) {
+		if !isUpdate && (myown || needxonk(user, &xonk)) {
 			if rid != "" && xonk.Public {
 				if needxonkid(user, rid) {
 					goingup++
@@ -1281,7 +1300,7 @@ func xonksaver(user *WhatAbout, item junk.Junk, origin string) *Honk {
 		return &xonk
 	}
 
-	return xonkxonkfn(item, origin, false, "")
+	return xonkxonkfn2(item, origin, false, "", myown)
 }
 
 func dumpactivity(item junk.Junk) {
@@ -1368,9 +1387,9 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 	var jo junk.Junk
 	j := junk.New()
 	j["id"] = user.URL + "/" + h.What + "/" + shortxid(h.XID)
-	j["actor"] = user.URL
+	j["actor"] = h.Honker
 	j["published"] = dt
-	if h.Public {
+	if h.Public && h.Honker == user.URL {
 		h.Audience = append(h.Audience, user.URL+"/followers")
 	}
 	j["to"] = h.Audience[0]
@@ -1397,7 +1416,7 @@ func jonkjonk(user *WhatAbout, h *Honk) (junk.Junk, junk.Junk) {
 		}
 		jo["published"] = dt
 		jo["url"] = h.XID
-		jo["attributedTo"] = user.URL
+		jo["attributedTo"] = h.Honker
 		if h.RID != "" {
 			jo["inReplyTo"] = h.RID
 		}
