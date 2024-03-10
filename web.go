@@ -415,12 +415,18 @@ func getinbox(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	honks := gethonksforuser(user.ID, 0)
-	if len(honks) > 20 {
-		honks = honks[0:20]
+	u := login.GetUserInfo(r)
+	if user.ID != UserID(u.UserID) {
+		http.Error(w, "that's not you!", http.StatusForbidden)
+		return
 	}
 
-	jonks := make([]junk.Junk, 0, 256)
+	honks := gethonksforuser(user.ID, 0)
+	if len(honks) > 60 {
+		honks = honks[0:60]
+	}
+
+	jonks := make([]junk.Junk, 0, len(honks))
 	for _, h := range honks {
 		j, _ := jonkjonk(user, h)
 		jonks = append(jonks, j)
@@ -750,7 +756,7 @@ var oldoutbox = gencache.New(gencache.Options[string, []byte]{Fill: func(name st
 		honks = honks[0:20]
 	}
 
-	jonks := make([]junk.Junk, 0, 256)
+	jonks := make([]junk.Junk, 0, len(honks))
 	for _, h := range honks {
 		j, _ := jonkjonk(user, h)
 		jonks = append(jonks, j)
@@ -794,6 +800,12 @@ func postoutbox(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	u := login.GetUserInfo(r)
+	if user.ID != UserID(u.UserID) {
+		http.Error(w, "that's not you!", http.StatusForbidden)
+		return
+	}
+
 	limiter := io.LimitReader(r.Body, 1*1024*1024)
 	j, err := junk.Read(limiter)
 	if err != nil {
