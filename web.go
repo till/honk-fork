@@ -820,15 +820,15 @@ func postoutbox(w http.ResponseWriter, r *http.Request) {
 	}
 	what := firstofmany(j, "type")
 	switch what {
-	default:
-		dlog.Printf("saving my own xonk")
+	case "Create":
 		honk := xonksaver2(user, j, serverName, true)
 		if honk == nil {
 			dlog.Printf("returned nil")
 			return
 		}
-		dlog.Printf("honking it")
 		go honkworldwide(user, honk)
+	default:
+		http.Error(w, "not sure about that", http.StatusBadRequest)
 	}
 }
 
