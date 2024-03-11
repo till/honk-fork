@@ -24,6 +24,8 @@ import (
 	notrand "math/rand"
 	"os"
 	"runtime/pprof"
+	"sort"
+	"strings"
 	"time"
 
 	"humungus.tedunangst.com/r/webs/log"
@@ -82,18 +84,28 @@ var cpuprofile = flag.String("cpuprofile", "", "write cpu profile to file")
 var memprofile = flag.String("memprofile", "", "write memory profile to this file")
 var memprofilefd *os.File
 
+func usage() {
+	flag.PrintDefaults()
+	out := flag.CommandLine.Output()
+	fmt.Fprintf(out, "\n  available honk commands:\n")
+	var msgs []string
+	for n, c := range commands {
+		msgs = append(msgs, fmt.Sprintf("    %s: %s\n", n, c.help))
+	}
+	sort.Strings(msgs)
+	fmt.Fprintf(out, "%s", strings.Join(msgs, ""))
+}
+
 func main() {
+	commands["help"] = cmd{
+		help: "you're looking at it",
+		callback: func(args []string) {
+			usage()
+		},
+	}
 	flag.StringVar(&dataDir, "datadir", dataDir, "data directory")
 	flag.StringVar(&viewDir, "viewdir", viewDir, "view directory")
-	flag.Usage = func() {
-		flag.PrintDefaults()
-		helpText := "\n  available honk commands:\n"
-		for n, c := range commands {
-			helpText += fmt.Sprintf("    %s: %s\n", n, c.help)
-		}
-
-		fmt.Fprint(flag.CommandLine.Output(), helpText)
-	}
+	flag.Usage = usage
 
 	flag.Parse()
 	if *cpuprofile != "" {

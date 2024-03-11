@@ -149,10 +149,10 @@ var commands = map[string]cmd{
 		},
 	},
 	"sendmsg": {
-		help: "send a message",
+		help: "send a raw activity",
 		callback: func(args []string) {
 			if len(args) < 4 {
-				errx("usage: honk send username filename rcpt")
+				errx("usage: honk sendmsg username filename rcpt")
 			}
 			user, err := butwhatabout(args[1])
 			if err != nil {
@@ -166,7 +166,7 @@ var commands = map[string]cmd{
 		},
 	},
 	"cleanup": {
-		help: "clean up? (enter usefull )",
+		help: "clean up stale data from database",
 		callback: func(args []string) {
 			arg := "30"
 			if len(args) > 1 {
@@ -176,7 +176,7 @@ var commands = map[string]cmd{
 		},
 	},
 	"unplug": {
-		help: "not sure",
+		help: "disconnect from a dead server",
 		callback: func(args []string) {
 			if len(args) < 2 {
 				errx("usage: honk unplug servername")
