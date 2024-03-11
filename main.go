@@ -24,7 +24,6 @@ import (
 	notrand "math/rand"
 	"os"
 	"runtime/pprof"
-	"strconv"
 	"time"
 
 	"humungus.tedunangst.com/r/webs/log"
@@ -86,6 +85,16 @@ var memprofilefd *os.File
 func main() {
 	flag.StringVar(&dataDir, "datadir", dataDir, "data directory")
 	flag.StringVar(&viewDir, "viewdir", viewDir, "view directory")
+	flag.Usage = func() {
+		flag.PrintDefaults()
+		helpText := "\n  available honk commands:\n"
+		for n, c := range commands {
+			helpText += fmt.Sprintf("    %s: %s\n", n, c.help)
+		}
+
+		fmt.Fprint(flag.CommandLine.Output(), helpText)
+	}
+
 	flag.Parse()
 	if *cpuprofile != "" {
 		f, err := os.Create(*cpuprofile)
@@ -118,12 +127,11 @@ func main() {
 	}
 	switch cmd {
 	case "init":
-		initdb()
+		commands["init"].callback(args)
 	case "upgrade":
-		upgradedb()
+		commands["upgrade"].callback(args)
 	case "version":
-		fmt.Println(softwareVersion)
-		os.Exit(0)
+		commands["version"].callback(args)
 	}
 	db := opendatabase()
 	dbversion := 0
@@ -153,134 +161,10 @@ func main() {
 
 	prepareStatements(db)
 
-	switch cmd {
-	case "admin":
-		adminscreen()
-	case "import":
-		if len(args) != 4 {
-			errx("import username honk|mastodon|twitter srcdir")
-		}
-		importMain(args[1], args[2], args[3])
-	case "export":
-		if len(args) != 3 {
-			errx("export username destdir")
-		}
-		export(args[1], args[2])
-	case "devel":
-		if len(args) != 2 {
-			errx("need an argument: devel (on|off)")
-		}
-		switch args[1] {
-		case "on":
-			setconfig("devel", 1)
-		case "off":
-			setconfig("devel", 0)
-		default:
-			errx("argument must be on or off")
-		}
-	case "setconfig":
-		if len(args) != 3 {
-			errx("need an argument: setconfig key val")
-		}
-		var val interface{}
-		var err error
-		if val, err = strconv.Atoi(args[2]); err != nil {
-			val = args[2]
-		}
-		setconfig(args[1], val)
-	case "adduser":
-		adduser()
-	case "deluser":
-		if len(args) < 2 {
-			errx("usage: honk deluser username")
-		}
-		deluser(args[1])
-	case "chpass":
-		if len(args) < 2 {
-			errx("usage: honk chpass username")
-		}
-		chpass(args[1])
-	case "follow":
-		if len(args) < 3 {
-			errx("usage: honk follow username url")
-		}
-		user, err := butwhatabout(args[1])
-		if err != nil {
-			errx("user %s not found", args[1])
-		}
-		var meta HonkerMeta
-		mj, _ := jsonify(&meta)
-		honkerid, flavor, err := savehonker(user, args[2], "", "presub", "", mj)
-		if err != nil {
-			errx("had some trouble with that: %s", err)
-		}
-		if flavor == "presub" {
-			followyou(user, honkerid, true)
-		}
-	case "unfollow":
-		if len(args) < 3 {
-			errx("usage: honk unfollow username url")
-		}
-		user, err := butwhatabout(args[1])
-		if err != nil {
-			errx("user not found")
-		}
-		row := db.QueryRow("select honkerid from honkers where xid = ? and userid = ? and flavor in ('sub')", args[2], user.ID)
-		var honkerid int64
-		err = row.Scan(&honkerid)
-		if err != nil {
-			errx("sorry couldn't find them")
-		}
-		unfollowyou(user, honkerid, true)
-	case "sendmsg":
-		if len(args) < 4 {
-			errx("usage: honk send username filename rcpt")
-		}
-		user, err := butwhatabout(args[1])
-		if err != nil {
-			errx("user %s not found", args[1])
-		}
-		data, err := os.ReadFile(args[2])
-		if err != nil {
-			errx("can't read file: %s", err)
-		}
-		deliverate(user.ID, args[3], data)
-	case "cleanup":
-		arg := "30"
-		if len(args) > 1 {
-			arg = args[1]
-		}
-		cleanupdb(arg)
-	case "unplug":
-		if len(args) < 2 {
-			errx("usage: honk unplug servername")
-		}
-		name := args[1]
-		unplugserver(name)
-	case "backup":
-		if len(args) < 2 {
-			errx("usage: honk backup dirname")
-		}
-		name := args[1]
-		svalbard(name)
-	case "ping":
-		if len(args) < 3 {
-			errx("usage: honk ping (from username) (to username or url)")
-		}
-		name := args[1]
-		targ := args[2]
-		user, err := butwhatabout(name)
-		if err != nil {
-			errx("unknown user %s", name)
-		}
-		ping(user, targ)
-	case "run":
-		serve()
-	case "backend":
-		backendServer()
-	case "test":
-		ElaborateUnitTests()
-	default:
-		errx("unknown command")
+	c, ok := commands[cmd]
+	if !ok {
+		errx("don't know about %q", cmd)
 	}
+
+	c.callback(args)
 }

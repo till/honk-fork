@@ -102,6 +102,15 @@ func getserveruser() *WhatAbout {
 	return user
 }
 
+func gethonker(userid UserID, xid string) (int64, error) {
+	row := opendatabase().
+		QueryRow("select honkerid from honkers where xid = ? and userid = ? and flavor in ('sub')", xid, userid)
+	var honkerid int64
+
+	err := row.Scan(&honkerid)
+	return honkerid, err
+}
+
 func butwhatabout(name string) (*WhatAbout, error) {
 	user, ok := somenamedusers.Get(name)
 	if !ok {
