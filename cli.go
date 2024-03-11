@@ -12,7 +12,7 @@ type cmd struct {
 }
 
 var commands = map[string]cmd{
-	"initdb": {
+	"init": {
 		help: "initialize honk",
 		callback: func(args []string) {
 			initdb()
